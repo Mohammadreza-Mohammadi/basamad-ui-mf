@@ -10,8 +10,6 @@ import {
   BaseModule,
   DynamicComponentService,
 } from 'barsa-novin-ray-core';
-import { BarsaSapUiModule } from 'barsa-sap-ui';
-
 import { OrientationService } from './orientation.service';
 import { BasamadService } from './basamad-service';
 
@@ -71,7 +69,6 @@ const pipes = [
     CommonModule,
     RouterModule,
     BarsaNovinRayCoreModule,
-    BarsaSapUiModule,    
     FundamentalNgxCoreModule,
     FormModule,
     FormsModule,

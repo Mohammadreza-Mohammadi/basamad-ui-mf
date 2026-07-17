@@ -28,8 +28,7 @@
     "..\\..\\node_modules\\rxjs\\dist\\esm\\index.js",
     "..\\..\\node_modules\\rxjs\\dist\\esm\\operators\\index.js",
     "..\\..\\node_modules\\tslib\\tslib.es6.mjs",
-    "..\\..\\node_modules\\barsa-novin-ray-core\\fesm2022\\barsa-novin-ray-core.mjs",
-    "..\\..\\node_modules\\barsa-sap-ui\\fesm2022\\barsa-sap-ui.mjs"
+    "..\\..\\node_modules\\barsa-novin-ray-core\\fesm2022\\barsa-novin-ray-core.mjs"
   ],
   "exclude": [
     "**/*.spec.ts",

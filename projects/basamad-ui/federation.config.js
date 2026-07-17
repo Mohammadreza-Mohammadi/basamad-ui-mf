@@ -33,9 +33,8 @@ module.exports = withNativeFederation({
         '@angular/service-worker':   { singleton: true, strictVersion: false, requiredVersion: 'auto' },
         'rxjs':                      { singleton: true, strictVersion: false, requiredVersion: 'auto', includeSecondaries: true },
         'tslib':                     { singleton: true, strictVersion: false, requiredVersion: 'auto' },
-        // کتابخانه‌های barsa که توکن‌های DI و DynamicComponentService رو نگه می‌دارن؛ باید با host singleton بمونن.
-        'barsa-novin-ray-core':      { singleton: true, strictVersion: false, requiredVersion: 'auto' },
-        'barsa-sap-ui':              { singleton: true, strictVersion: false, requiredVersion: 'auto' }
+        // barsa-novin-ray-core توکن‌های DI و DynamicComponentService رو نگه می‌داره؛ باید با host singleton بمونه.
+        'barsa-novin-ray-core':      { singleton: true, strictVersion: false, requiredVersion: 'auto' }
     }),
 
     // چون این workspace هیچ lib داخلیِ tsconfig-paths نداره (همه‌ی barsa از node_modules میان)،
