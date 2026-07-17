@@ -47,6 +47,9 @@ module.exports = withNativeFederation({
         'rxjs/fetch',
         'rxjs/testing',
         'rxjs/webSocket'
+        // نکته: barsa-chat اینجا skip نمی‌شه؛ به‌جاش یک stub محلی (stubs/barsa-chat) به‌صورت
+        // وابستگی file: نصب شده تا import('barsa-chat') داخل barsa-sap-ui در همه‌ی pass های esbuild
+        // (از جمله bundling پکیج‌های shared) قابل resolve باشه. فیچر چت هیچوقت اجرا نمی‌شه.
     ],
 
     features: {

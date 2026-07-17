@@ -19,8 +19,11 @@ export class ChartJabejayComponent
 {
   @ViewChild(GroupedBarChartComponent, { static: true })
   chart: GroupedBarChartComponent;
-  onVisibilityChange(e): void {
-    super.onVisibilityChange(e);
+
+  // این هندلرِ خروجیِ دایرکتیو `intersectionObserver` روی چایلد (bu-grouped-bar-chart) توی تمپلیته،
+  // نه متد کلاس پایه. توی barsa-novin-ray-core جدید، ReportViewBaseComponent دیگه onVisibilityChange
+  // نداره؛ پس فقط به‌عنوان هندلر تمپلیت نگهش می‌داریم و super رو صدا نمی‌زنیم.
+  onVisibilityChange(e: string): void {
     if (e === 'Visible') {
       setTimeout(() => {
         this.chart.refresh();

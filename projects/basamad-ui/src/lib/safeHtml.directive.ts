@@ -1,4 +1,4 @@
-import { Directive, ElementRef, OnInit, Renderer2 } from '@angular/core';
+import { Directive, OnInit } from '@angular/core';
 import { BaseDirective, getDeviceIsMobile } from 'barsa-novin-ray-core';
 
 
@@ -8,10 +8,9 @@ import { BaseDirective, getDeviceIsMobile } from 'barsa-novin-ray-core';
 
 })
 export class SafeHtmlDirective extends BaseDirective implements OnInit {
-    constructor(protected _el: ElementRef, private _renderer2: Renderer2) {
-        super(_el);
-    }
-    ngOnInit(): void {
+    // barsa-novin-ray-core جدید: BaseDirective خودش _el و _renderer2 رو با inject() تأمین می‌کنه و
+    // constructorش بدون آرگومانه؛ پس constructor سفارشی حذف شد و از فیلدهای protected ارث‌بری‌شده استفاده می‌شه.
+    override ngOnInit(): void {
         super.ngOnInit();
         const isMobile = getDeviceIsMobile();
         if (!isMobile) {

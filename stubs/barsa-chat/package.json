@@ -1,0 +1,10 @@
+{
+  "name": "barsa-chat",
+  "version": "0.0.0-stub",
+  "description": "جایگزین موقت (placeholder) برای پکیج داخلیِ منتشرنشده‌ی barsa-chat. barsa-sap-ui به‌صورت لِیزی import('barsa-chat') می‌کند؛ basamad-ui هیچ‌وقت فیچر چت را باز نمی‌کند، پس این ماژول فقط یک div توضیحی است تا build سالم بماند.",
+  "type": "module",
+  "main": "index.mjs",
+  "module": "index.mjs",
+  "types": "index.d.ts",
+  "private": true
+}

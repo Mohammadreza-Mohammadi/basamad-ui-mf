@@ -1,6 +1,5 @@
 import { CommonModule } from '@angular/common';
 import {
-  ComponentFactoryResolver,
   NgModule,
   NO_ERRORS_SCHEMA,
 } from '@angular/core';
@@ -83,10 +82,8 @@ const pipes = [
 })
 export class BasamadUiModule extends BaseModule {
   protected dynamicComponents = [...components];
-  constructor(
-    protected dcm: DynamicComponentService,
-    protected componentFactoryResolver: ComponentFactoryResolver
-  ) {
-    super(dcm, componentFactoryResolver, 'BasamadUiModule');
+  constructor(protected dcm: DynamicComponentService) {
+    // barsa-novin-ray-core جدید: BaseModule فقط (dcm, moduleName) می‌گیره (ComponentFactoryResolver حذف شده)
+    super(dcm, 'BasamadUiModule');
   }
 }
