@@ -1,0 +1,12 @@
+<bu-grouped-bar-chart
+  style="height:100svh"
+  [data]="moDataList | groupebyChart: viewSetting.GroupByProp"
+  [groupBy]="viewSetting.GroupByProp"
+  [xProp]="viewSetting.XProp"
+  [yProps]="viewSetting.YProps | split"
+  [yInterval]="+viewSetting.YInterval"  
+  intersectionObserver
+  [intersectionThreshold]="0.5"
+  (visibilityChange)="onVisibilityChange($event)"
+>
+</bu-grouped-bar-chart>

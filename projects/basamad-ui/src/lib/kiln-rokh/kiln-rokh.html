@@ -1,0 +1,200 @@
+<div class="tw-invisible" #topshadowGap style="width:var(--topshadow-gap)"></div>
+<div class="wrapper">
+  <div class="top-shadow"></div>
+  <div class="top-shadow2" #sensorTrack>
+    @for(sensor of transmitters ;track sensor.Id;let odd=$odd){
+    <div class="sensor-container2">
+      <div
+        class="sensor-container tw-flex tw-w-full tw-relative tw-justify-center"
+        [class.highlight-pokht]="sensor.ShirNode > 0 && sensor.ShirNode < 100"
+        [class.highlight-pishgarm]="sensor.Pishgarm"
+        [class.low-dama]="sensor.Value < 150"
+        [class.isMajazi]="sensor.IsMajazi"
+      >
+        <svg
+          [attr.width]="deviceSize === 'xl' || deviceSize === 'l' ? 12 : 6"
+          [attr.height]="deviceSize === 'xl' || deviceSize === 'l' ? 12 : 6"
+          viewBox="0 0 12 12"
+          xmlns="http://www.w3.org/2000/svg"
+          [class.invisible]="sensor.IsMajazi"
+        >
+          <rect
+            x="5"
+            y="1"
+            width="2"
+            height="8"
+            fill="#ccc"
+            stroke="#333"
+            stroke-width="0.5"
+          />
+
+          <circle
+            cx="6"
+            cy="10"
+            r="2"
+            [attr.fill]="sensor.Value | damaColor"
+            stroke="#333"
+            stroke-width="0.5"
+          />
+        </svg>
+
+        <span class="sensor-number" [class.error]="sensor.Value > 2000"
+          >{{ sensor.SlaveAddress }}</span
+        >
+        <img
+          *ngIf="
+            sensor.Value > 2000 ||
+            sensor.Error ||
+            sensor.TransmitterFailed ||
+            sensor.TermokoplFailed
+          "
+          class="sensor-alarm"
+          src="/assets/svg/monitoring/al-s-dama.svg"
+        />
+        @if(sensor.ShirNode>0 && sensor.ShirNode<100){
+        @if(sensor.ShirNodeIsOdd){
+        <div class="valves-container tw-relative invisible">
+          <span class="valves-number">{{ sensor.ShirNode }}</span>
+        </div>
+        }
+        <div class="valves-container tw-relative">
+          <span class="valves-number">
+            <span class="invisible">555</span>
+            <span class="tw-w-full" [ngClass]="'c' + sensor.RangShir">
+              {{ sensor.ShirNode }}</span
+            >
+          </span>
+        </div>
+        }
+      </div>
+      <span class="sensor-dama invisible disabled">555</span>
+      @if(sensor.Value < 2000){
+      <span
+        class="sensor-dama"
+        [class.odd]="odd"
+        (click)="sensor.$ShowAdadPokht=!sensor.$ShowAdadPokht"
+      >
+        <span class="invisible tw-h-0">555</span>
+        <div class="damacontainer"
+          style="
+            font-size: var(--klink-sensor-dama-div-fontsize);
+            background: white;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+          "
+        >
+          <span class="tw-text-center">{{ sensor.Value }}</span>
+
+          @if(odd){ @if(sensor.$ShowAdadPokht){
+          <span class="tw-text-center tw-relative">{{ sensor.AdadPokht }}</span>
+          } }@else{
+          <span class="tw-text-center tw-relative"
+            >{{ sensor.AdadPokht }}
+            <div
+              [style.display]="sensor.$ShowAdadPokht ? 'none' :'block'"
+              style="
+                position: absolute;
+                left: -2px;
+                right: -2px;
+                top: 0;
+                bottom: 0;
+                background: black;
+                inset:0;
+              "
+            ></div>
+          </span>
+          }
+        </div>
+      </span>
+      }
+    </div>
+
+    }
+  </div>
+  <div class="klin-body">
+    <div
+      class="ghamir-container"
+      #ghamirTrack
+
+    >
+      @for(ghamir of ghamirs;track ghamir.Id){
+
+      <div
+        class="klin-ghamir-info"
+        [style.left.%]="ghamir.RelativeLeft * 100"
+        
+      >
+        <div class="valves-container disabled invisible"></div>
+        <div class="valves-container disabled invisible"></div>
+        <div class="valves-container disabled invisible"></div>
+        <div class="valves-container disabled invisible"></div>
+        <div class="valves-container disabled invisible"></div>
+        <div class="ghamir-wrapper">
+          <div class="ghamirnumber">
+            <span class="num">{{ ghamir.Number }}</span>
+            <span class="invisible">555</span>
+          </div>
+          <div class="ghamir" #ghamirRef>
+            <span class="nimehAjor disabled invisible tw-h-0">1/2</span>
+
+            <span
+              class="sizeAjor disabled invisible"              
+              >{{ '10سانتی' }}
+            </span>           
+            <span
+              class="sizeAjor"              
+              style="
+                overflow: hidden;
+                text-wrap: unset;
+                word-wrap: normal;
+                white-space: nowrap;
+              "
+              [attr.title]="ghamir.Mahsol?.$Caption || ''"
+              [ngClass]="{
+                'ajor-chideman': ghamir.GhamirStatusText === 'چیدمان',
+                'ajor-pokht':
+                  ghamir.GhamirStatusText !== 'چیدمان' && ghamir.HasMahsol
+              }"
+              [class.ajor-chideman]="ghamir.Chideman"
+              >{{ ghamir.Mahsol?.$Caption }} @if(!ghamir.Mahsol?.$Caption){
+              <span class="invisible">ندارد</span>
+              }
+            </span>
+          </div>
+        </div>
+      </div>
+      }
+    </div>
+  </div>
+  <div class="tw-w-full !tw-bg-black tw-flex tw-flex-col">
+    <span class="sensor-dama ng-star-inserted">
+      <div
+        class="invisible"
+        style="
+          font-size: var(--klink-sensor-dama-div-fontsize);
+          text-align: center;
+          display: flex;
+          flex-direction: column;
+        "
+      >
+        <span class="tw-text-center">555</span>
+        
+      </div>
+    </span>
+    <span class="sensor-dama ng-star-inserted">
+      <div
+        class="invisible"
+        style="
+          font-size: var(--klink-sensor-dama-div-fontsize);
+          text-align: center;
+          display: flex;
+          flex-direction: column;
+        "
+      >
+        <span class="tw-text-center">555</span>
+        
+      </div>
+    </span>
+  </div>
+</div>

@@ -1,0 +1,112 @@
+{
+  "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
+  "version": 1,
+  "newProjectRoot": "projects",
+  "projects": {
+    "basamad-ui": {
+      "projectType": "library",
+      "root": "projects/basamad-ui",
+      "sourceRoot": "projects/basamad-ui/src",
+      "prefix": "bu",
+      "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-angular:ng-packagr",
+          "options": {
+            "project": "projects/basamad-ui/ng-package.json"
+          },
+          "configurations": {
+            "production": {
+              "tsConfig": "projects/basamad-ui/tsconfig.lib.prod.json"
+            },
+            "development": {
+              "tsConfig": "projects/basamad-ui/tsconfig.lib.json"
+            }
+          },
+          "defaultConfiguration": "production"
+        }
+      }
+    },
+    "basamad-ui-mf": {
+      "projectType": "application",
+      "root": "projects/basamad-ui",
+      "sourceRoot": "projects/basamad-ui/src",
+      "prefix": "bu",
+      "architect": {
+        "build": {
+          "builder": "@angular-architects/native-federation:build",
+          "options": {},
+          "configurations": {
+            "production": {
+              "target": "basamad-ui-mf:esbuild:production"
+            },
+            "development": {
+              "target": "basamad-ui-mf:esbuild:development",
+              "dev": true
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "serve": {
+          "builder": "@angular-architects/native-federation:build",
+          "options": {
+            "target": "basamad-ui-mf:serve-original:development",
+            "rebuildDelay": 500,
+            "dev": true,
+            "cacheExternalArtifacts": false,
+            "port": 0
+          }
+        },
+        "esbuild": {
+          "builder": "@angular/build:application",
+          "options": {
+            "outputPath": "dist/basamad-ui-mf",
+            "index": "projects/basamad-ui/src/index.html",
+            "tsConfig": "projects/basamad-ui/tsconfig.app.json",
+            "polyfills": ["zone.js", "es-module-shims"],
+            "browser": "projects/basamad-ui/src/main.ts",
+            "assets": [
+              {
+                "glob": "**/*",
+                "input": "projects/basamad-ui/public",
+                "output": ""
+              }
+            ],
+            "styles": [],
+            "scripts": []
+          },
+          "configurations": {
+            "production": {
+              "optimization": true,
+              "outputHashing": "all"
+            },
+            "development": {
+              "optimization": false,
+              "sourceMap": true
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "serve-original": {
+          "builder": "@angular/build:dev-server",
+          "options": {
+            "buildTarget": "basamad-ui-mf:esbuild:development",
+            "port": 4202,
+            "host": "0.0.0.0"
+          },
+          "configurations": {
+            "production": {
+              "buildTarget": "basamad-ui-mf:esbuild:production"
+            },
+            "development": {
+              "buildTarget": "basamad-ui-mf:esbuild:development"
+            }
+          },
+          "defaultConfiguration": "development"
+        }
+      }
+    }
+  },
+  "cli": {
+    "schematicCollections": ["@angular-architects/native-federation"]
+  }
+}

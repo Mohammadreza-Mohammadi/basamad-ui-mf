@@ -1,0 +1,84 @@
+<ng-container> </ng-container>
+<ng-container
+  *ngTemplateOutlet="
+        header;
+        context: {
+            mo: mo,
+            layout94:layout94,            
+        }
+    "
+></ng-container>
+<ng-template #header let-layout94="layout94">
+  <fd-toolbar [fdType]="'transparent'">
+    <h4 fd-title>
+      @if('عنوان' | controlUi: layout94; as t2){
+      <bsu-layout-control [config]="t2"></bsu-layout-control>
+      }
+    </h4>
+  </fd-toolbar>
+</ng-template>
+@if(mo){
+<!-- <div class="koreh-segmented koreh pb-1 pt-1" style="display: flex">
+  <div style="flex: 1; padding-right: 1rem">
+    <div
+      class="btn-group"
+      role="group"
+      aria-label="Basic radio toggle button group"
+    >
+      <ng-container
+        *ngFor="
+          let koreh of moDataList
+            | multipleGroupBy: groupByKoreh
+            | filterGroup;
+          let index = index
+        "
+      >
+        <ng-container *ngIf="koreh.$Group">
+          <input
+            type="radio"
+            class="btn-check btn-sm"
+            name="btnradio"
+            [attr.id]="'_' + index"
+            [attr.checked]="selectedKoreh() === koreh.$Group ? true : null"
+            (change)="selectedKoreh.set(koreh.$Group)"
+          />
+          <label class="btn btn-outline-warning" [attr.for]="'_' + index">{{
+            koreh.$Group
+          }}</label>
+        </ng-container>
+      </ng-container>
+    </div>
+  </div>
+</div> -->
+
+<div class="content">
+  <div #divRef2 style="display: flex; flex-direction: column; gap: 0.5rem">
+    <bu-pokhtban-klin-online-monitoring
+      [title]="mo.$Caption"
+      [transmitters]="mo.Transmitters.MoDataList"
+      [ghamirs]="mo.Ghamirs.MoDataList"
+      [startOfFirstNodePosition]="mo.StartOfFirstNodePosition"
+      [deviceSize]="deviceSize"
+      [mobile]="isMobile"
+      (zoom)="onZoom()"
+    >
+    </bu-pokhtban-klin-online-monitoring>
+
+    <!-- <app-monitoring-koreh-item
+              *ngIf="!schemaMode"
+              [title]="mo.$Group"
+              [moList]="mo.$Children"
+              [allColumns]="allColumns"
+              [deviceSize]="'s'"
+              [ghamirPictures]="ghamirPictures$ | async"
+              [ghamirHistory]="
+                (ghamirHistory$ | async)!!
+                  | filter: { koreh: koreh.$Group }
+                  | filter: { rokh: index + 1 }
+              "
+              (pictureUpdated)="onPictureUpdated($event)"
+            >
+            </app-monitoring-koreh-item> -->
+  </div>
+</div>
+}

@@ -1,0 +1,21 @@
+<svg class="progress-ring" [attr.width]="width" [attr.height]="width">
+  <circle
+    [attr.stroke]="color"
+    stroke-width="3"
+    fill="transparent"
+    [attr.r]="(width - 10) / 2"
+    [attr.cx]="width / 2"
+    [attr.cy]="width / 2"
+  />
+  <circle
+    #circleRef
+    class="progress-ring__circle"
+    [attr.stroke]="critical ? 'red' : color"
+    stroke-width="3"
+    fill="transparent"
+    [attr.r]="(width - 10) / 2"
+    [attr.cx]="width / 2"
+    [attr.cy]="width / 2"
+  />
+</svg>
+<span class="subtitle nimehAjor" [style.color]="color">{{ subtitle }}</span>

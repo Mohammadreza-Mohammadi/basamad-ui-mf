@@ -1,0 +1,78 @@
+:host {
+  display: block;
+
+  .content {
+    background-color: #000;
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+  }
+}
+.koreh-segmented {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  justify-content: start;
+  span {
+    background: #f2bb05;
+    color: black;
+  }
+  &.koreh {
+    align-items: center;
+    justify-content: center;
+  }
+}
+.back-dialog {
+  background: #1e1e1e;
+  ::ng-deep {
+    .fd-dialog__header {
+      background-color: #1e1e1e;
+      box-shadow: none;
+      border-bottom: 1px solid #676666;
+
+      .fd-switch__input:checked + .fd-switch__slider {
+        --fdSwitch_Track_Background: var(--sapButton_Track_Selected_Background);
+        --fdSwitch_Shadow: var(--fdSwitch_Active_Shadow);
+        --fdSwitch_Handle_Background: #f2bb05;
+        --fdSwitch_Handle_Border_Color: #f2bb05;
+        --fdSwitch_Border_Color: #f2bb05;
+      }
+      .fd-switch__text {
+        color: white;
+      }
+      .fd-button.fd-button--toggled {
+        --fdButtonColor: black;
+        --fdButtonBorderColor: #f2bb05;
+        --fdButtonBackgroundColor: #f2bb05;
+        --sapButton_Selected_Hover_Background: #f2bb05;
+        --sapButton_Hover_Background: #f2bb05;
+        --sapButton_Selected_Hover_BorderColor: #f2bb05;
+      }
+      .fd-button:active {
+        --sapButton_Active_Background: #f2bb05;
+        --sapButton_Active_BorderColor: #f2bb05;
+      }
+      .close-btn {
+        button {
+          color: #f2bb05;
+          &:active {
+            --sapButton_Active_Background: #f2bb05;
+            --sapButton_Active_BorderColor: #f2bb05;
+            --sapButton_Lite_Active_BorderColor: #f2bb05;
+            --sapButton_Lite_Active_Background: #f2bb05;
+          }
+          &:hover {
+            --sapButton_Lite_Hover_Background: #f2bb05;
+            color: white;
+          }
+        }
+      }
+    }
+  }
+}
+fd-bar-element {
+  ::ng-deep {
+    p {
+      font-size: 1.5rem;
+    }
+  }
+}

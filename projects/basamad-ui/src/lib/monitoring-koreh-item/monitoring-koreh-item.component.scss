@@ -1,0 +1,65 @@
+:host {
+  .box-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: start;
+    gap: 0.5rem;
+  }
+  .box {
+    border: 1px solid #7e7e7e;
+    width: 73px;
+    height: 58px;
+    display: flex;
+    flex-direction: column;
+    justify-content: end;
+    text-align: center;
+    align-items: center;
+    position: relative;
+    .status {
+      display: none;
+    }
+    &.filter-vaziat {
+      .status {
+        display: block;
+      }
+    }
+    .gorohAjor.chideman {
+      color: white;
+    }
+    .gorohAjor.pokht {
+      color: #f2bb05;
+    }
+    .sokhtpash {
+      width: 17px;
+      height: 14px;
+      position: absolute;
+      top: 0;
+      right: 5px;
+    }
+  }
+  .box.filter-noe {
+    // background-color: #d9d9d9;
+    .status {
+      display: block;
+    }
+  }
+  .box.filter-dama,
+  .box.filter-vaziat {
+    .gorohAjor {
+      display: none;
+    }
+  }
+}
+.center-monitoring-values {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: auto;
+  width: 100%;
+}
+.dama-error {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+}

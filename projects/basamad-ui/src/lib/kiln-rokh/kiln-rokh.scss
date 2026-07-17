@@ -1,0 +1,264 @@
+$ghamir-color: #363636;
+
+.wrapper {
+  height: auto;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  div.top-shadow {
+    height: var(--top-shadow-height);
+  }
+  div.top-shadow,
+  div.top-shadow2 {
+    background: #3b382e;
+    position: relative;
+    align-items: start;
+    // clip-path:polygon(1% 0,99% 0%,99.5% 100%,0.5% 100%);
+    display: flex;
+    width: 100%;
+    gap: var(--topshadow-gap);
+    padding: 0 var(--ghamir-gap);
+    justify-content: center;
+  }
+  div.top-shadow2 {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    height: auto;
+    background-color: transparent;
+  }
+  div.sensor-container2 {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+    justify-content: space-between;
+    position: relative;
+    & > .sensor-dama {
+      // background: white;
+      z-index: 10;
+      color: blue;
+      // padding: 0 2px;
+      display: flex;
+      flex-direction: column;
+      &.odd {
+        position: absolute;
+        transform: translateY(var(--top-shadow-height));
+      }
+    }
+    &:hover {
+      .sensor-number,
+      .sensor-dama div {
+        background: red !important;
+        color: white;
+      }
+    }
+    .sensor-dama {
+      font-size: var(--klink-sensor-dama-fontsize);
+      font-weight: bold;
+    }
+    img.sensor-dama {
+      width: var(--klink-sensor-dama-fontsize);
+    }
+    .sensor-number {
+      font-size: var(--klink-sensor-dama-div-fontsize);
+      color: white;
+    }
+  }
+  .klin-body {
+    flex: 1;
+    // clip-path: polygon(0.5% 0,99.5% 0%,100% 100%,0% 100%);
+    background: #dd9c69;
+    background-repeat: repeat;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: flex-end;
+    padding: var(--klink-body-padding);
+    .klin-ghamir-info {
+      display: flex;
+      flex-direction: column;
+      row-gap: 0.2rem;
+      align-items: center;
+      justify-content: flex-end;
+      position: absolute;
+    }
+    .sensor-container {
+      padding-top: 5px;
+    }
+    .ghamir-container {
+      display: flex;
+      width: 100%;
+      gap: var(--ghamir-gap);
+      justify-content: center;
+    }
+    .ghamir-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .ghamir {
+      flex: 1;
+      background-color: #363636;
+
+      border-top-left-radius: 57%;
+      border-top-right-radius: 57%;
+      display: flex;
+      flex-direction: column;
+      color: white;
+      align-items: center;
+      padding-top: 3px;
+    }
+  }
+}
+.ghamirnumber {
+  font-weight: bold;
+  flex: 1;
+  font-size: var(--klink-ghamir-fontsize);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  & > span:nth-child(2) {
+    height: 5px;
+  }
+  & > span.num {
+    background-color: rgb(7, 102, 149);
+    padding: 2px;
+    color: White;
+    text-align: center;
+    border-radius: 0.4rem;
+  }
+}
+.valves-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--klink-valves-size);
+  flex-direction: column;
+  border-radius: 0.6rem;
+  transform: translateY(1.5rem);
+}
+.valves-number {
+  color: white;
+  font-weight: bold;
+  font-size: var(--klink-valves-number-fontsize);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  & span:first-child {
+    height: 0px;
+  }
+  & > span:nth-child(2) {
+    border-radius: 5px;
+    text-align: center;
+    &.c100 {
+      background-color: #6f0f0a;
+    }
+    &.c50 {
+      background-color: black;
+    }
+    &.c200 {
+      background-color: #f2bb05;
+    }
+    &.c0 {
+      background-color: #005c14;
+    }
+    &.c150 {
+      background-color: #005c14;
+    }
+  }
+}
+.spareNode {
+  color: #ffc700;
+}
+.ghamirKlin {
+  height: 69px;
+}
+.disabled {
+  pointer-events: none;
+}
+.invisible {
+  visibility: hidden;
+}
+.gradiant-dama {
+  height: 15px;
+  display: flex;
+  span {
+    display: inline-block;
+  }
+}
+.sizeAjor {
+  font-size: var(--klink-sizeAjor-size);
+  line-height: var(--klink-sizeAjor-size);
+}
+.sizeAjorText {
+  font-size: calc(var(--klink-sizeAjor-fontsize) / 1.5);
+  line-height: var(--klink-sizeAjor-size);
+}
+
+.h0 {
+  height: 0;
+}
+div.bottom-shadow {
+  height: auto;
+  position: relative;
+  display: flex;
+  width: 100%;
+  gap: var(--ghamir-gap);
+  padding-right: var(--ghamir-gap);
+  justify-content: center;
+  padding-top: 2px;
+}
+.sensor-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: white;
+  gap: 0.07rem;
+}
+.nimehAjor {
+  font-size: var(--klink-sizeAjor-nimeh-fontsize);
+}
+.sensor-alarm {
+  width: var(--klink-sensor-alarm-size);
+}
+.error {
+  background: red;
+}
+.sensors-ghamir {
+  background-color: transparent;
+}
+.shir.oddShir {
+  margin-top: 2rem;
+}
+// .isMajazi .sensor-dama{
+//   margin-top:1rem;
+// }
+.isMajazi {
+  //   opacity: 0.6;
+}
+.top-shadow .sensor-container.isMajazi {
+  // margin-top: 3rem;
+  .sensor-number {
+    font-size: calc(var(--klink-sizeAjor-nimeh-fontsize) * 0.9);
+    color: white;
+  }
+}
+// .low-dama .sensor-dama {
+//   visibility: hidden;
+// }
+
+@media all and (max-width: 640px) {
+  .valves-container {
+    border-radius: 0.2rem;
+  }
+  .ghamirnumber {
+    & > span.num {
+      border-radius: 0.1rem;
+    }
+  }
+  .sizeAjorText {
+    font-size: calc(var(--klink-sizeAjor-fontsize) / 1);
+  }
+}

@@ -1,0 +1,22 @@
+# Dependencies
+/node_modules
+
+# Build output
+/dist
+/out-tsc
+/tmp
+
+# Native Federation
+/projects/basamad-ui/.angular
+/.angular/cache
+
+# Angular
+.angular
+
+# IDE
+/.idea
+/.vscode/*
+!/.vscode/extensions.json
+*.log
+.DS_Store
+Thumbs.db

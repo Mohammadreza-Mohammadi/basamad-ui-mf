@@ -1,0 +1,167 @@
+<div style="display: flex; align-items: center; padding: 1rem">  
+  <strong style="color:white">{{ rokhTitle }}</strong>
+</div>
+
+<div class="box-container" [style.margin-right.px]="marginRight">
+  <ng-container *ngFor="let ghamir of ghamirs">
+    <ng-container
+      *ngTemplateOutlet="
+        boxTemplate;
+        context: {
+          $implicit: ghamir,
+          pasagarm: ghamir.pasagarm,
+          pishgarm: ghamir.pishgarm,
+          bricking: ghamir.bricking
+        }
+      "
+    ></ng-container>
+  </ng-container>
+</div>
+
+<ng-template
+  #boxTemplate
+  let-ghamir
+  let-pishgarm="pishgarm"
+  let-pasagarm="pasagarm"
+  let-bricking="bricking"
+>
+  <div style="text-align: center">
+    <span style="color: #d2d1d1"> {{ ghamir.number }}</span>
+    <fd-action-sheet
+      #actionsheet
+      [mobile]="true"
+      style="display: block; position: relative; width: 100%; height: 100%"
+    >
+      <fd-action-sheet-control>
+        <div
+          class="box"
+          #boxRef
+          [ngClass]="[ghamir.state, '']"
+          [style.background]="ghamir.mianginDama | damaColor"
+        >
+          <ng-template #ax let-ghamirPictures>
+            <img
+              style="cursor: pointer"
+              *ngIf="ghamirPictures && ghamirPictures[ghamir.Id]"
+              [src]="
+                ghamirPictures[ghamir.Id].Pictures.Images[0].FileId
+                  | picFieldSrc
+                    : 'BarsaPicture.Thumbnail'
+                    : null
+                    : ''
+                    : 260
+                    : 260
+              "
+              [style.width.px]="boxRef.offsetWidth"
+              [style.height.px]="boxRef.offsetHeight"
+            />
+            <span
+              style="
+                color: #ffffff;
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                z-index: 2;
+                font-size: 12px;
+              "
+              >{{ ghamirPictures[ghamir.Id].CreationDate$Caption }}</span
+            >
+            <div
+              style="
+                font-size: 10px;
+                position: absolute;
+                background-color: black;
+                opacity: 0.5;
+                height: 28px;
+                left: 0;
+                right: 0;
+                bottom: 0;
+              "
+            ></div>
+          </ng-template>
+
+          <div class="center-monitoring-values">
+            <div class="sokhtpash" *ngIf="ghamir.shirNumber">
+              <div style="position: relative">
+                <span
+                  style="
+                    position: absolute;
+                    z-index: 5;
+                    left: 0px;
+                    right: 0;
+                    text-align: center;
+                    top: -2px;
+                    color: navajowhite;
+                    font-size: 14px;
+                  "
+                  >{{ ghamir.shirNumber }}</span
+                >
+                <svg width="28" style="height: 18px" [class.blinking]="true">
+                  <circle cx="19" cy="8" r="8" [attr.fill]="ghamir.rangeShir" />
+                  Sorry, your browser does not support inline SVG.
+                </svg>
+              </div>
+            </div>
+            <ng-container
+              *ngFor="let sensor of ghamir.sensors; let index = index"
+            >
+              <ng-container *ngIf="index === 0">
+                <div [style.color]="ghamir.bricking ? 'white' : null">
+                  <div
+                    *ngIf="sensor.dama > 2000 || sensor.dama === 0"
+                    class="triangle dama-error blinking"
+                  ></div>
+                  <span *ngIf="sensor.dama < 2000">
+                    {{ sensor.dama || "-" }}</span
+                  >
+                </div>
+
+                <bu-pokht-progress
+                  class="invisible disabled"
+                  *ngIf="!ghamir.bricking"
+                  [subtitle]="ghamir.sensors[0].zamanMandBaghimandehCaption"
+                  [percentZamanMand]="ghamir.sensors[0].percentZamanMand"
+                ></bu-pokht-progress>
+                <bu-pokht-progress
+                  *ngIf="ghamir.bricking"
+                  [subtitle]="ghamir.sensors[0].zamanMandBaghimandehCaption"
+                  [percentZamanMand]="ghamir.sensors[0].percentZamanMand"
+                ></bu-pokht-progress>
+              </ng-container>
+            </ng-container>
+          </div>
+        </div>
+      </fd-action-sheet-control>
+
+      <fd-action-sheet-body
+        actionSheetBodyId="fd-action-sheet-mobile-body"
+        ariaLabelledby="fd-action-sheet-mobile-control"
+      >
+        <li
+          *ngIf="ghamirPictures && ghamirPictures[ghamir.Id]"
+          fd-action-sheet-item
+          label="مشاهده عکس ها"
+          glyph="eye"
+          fullscreenFiles
+          [files]="ghamirPictures[ghamir.Id].Pictures.Images"
+          [isImageGallery]="true"
+          [deviceSize]="deviceSize"
+          (click)="actionsheet.close()"
+        ></li>
+        <li
+          fd-action-sheet-item
+          label="ثبت عکس"
+          glyph="add"
+          (click)="actionsheet.close(); onSabtPictures(ghamir)"
+        ></li>
+        <li
+          fd-action-sheet-item
+          label="مشاهده  تاریخچه عکس ها"
+          glyph="eye"
+          (click)="actionsheet.close(); onShowGhamirPictures(ghamir)"
+        ></li>
+      </fd-action-sheet-body>
+    </fd-action-sheet>
+  </div>
+</ng-template>

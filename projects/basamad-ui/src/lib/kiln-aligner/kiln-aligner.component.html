@@ -1,0 +1,43 @@
+<div class="tw-w-full">
+  <!-- ردیف سنسورها -->
+  <div
+    #sensorTrack
+    class="track sensor-track"
+    (pointermove)="onPointerMove($event)"
+    (pointerup)="onPointerUp($event)"
+    (pointercancel)="onPointerUp($event)"
+    (pointerleave)="onPointerUp($event)"
+  >
+    <div
+      *ngFor="let s of sensors"
+      class="sensor"
+      [style.left.%]="s.relativeLeft * 100"
+      (pointerdown)="onPointerDown($event, 'sensor', s)"
+      [class.draggable]="mode === 'designer'"
+    >
+      <div class="sensor-dot"></div>
+      <div class="sensor-id">{{ s.id + 1 }}</div>
+    </div>
+  </div>
+
+  <!-- ردیف قمیرها -->
+  <div
+    #ghamirTrack
+    class="track ghamir-track"
+    (pointermove)="onPointerMove($event)"
+    (pointerup)="onPointerUp($event)"
+    (pointercancel)="onPointerUp($event)"
+    (pointerleave)="onPointerUp($event)"
+  >
+    <div
+      *ngFor="let g of ghamirs"
+      class="ghamir"
+      [style.left.%]="g.relativeLeft * 100"
+      (pointerdown)="onPointerDown($event, 'ghamir', g)"
+      [class.draggable]="mode === 'designer'"
+    >
+      <div class="ghamir-shape"></div>
+      <div class="ghamir-id">{{ g.id + 1 }}</div>
+    </div>
+  </div>
+</div>

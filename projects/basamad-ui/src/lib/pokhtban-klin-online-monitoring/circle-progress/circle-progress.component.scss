@@ -1,0 +1,12 @@
+
+:host{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+}
+.progress-ring__circle {
+  transition: 0.35s stroke-dashoffset;
+  transform: rotate(-90deg);
+  transform-origin: 50% 50%;
+}

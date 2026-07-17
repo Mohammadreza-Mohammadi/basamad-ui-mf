@@ -1,0 +1,8 @@
+<div
+  #container
+  intersectionObserver
+  [intersectionThreshold]="0.5"
+  (visibilityChange)="onVisibilityChange($event)"
+  resizeHandler
+  [fnResize]="Refresh"
+></div>

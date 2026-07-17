@@ -1,0 +1,76 @@
+@if(!transmitters.length){
+
+<a
+  fd-object-status
+  status="negative"
+  glyph="error"
+  [clickable]="true"
+  [large]="true"
+  [inverted]="true"
+  label="کوره غیر فعال است."
+  [attr.aria-label]="'داده ی دریافت نشده است.'"
+></a>
+
+}@else{ @if(startOfFirstNodePosition==='3' || startOfFirstNodePosition==='4') {
+<bu-kiln-rokh
+  [deviceSize]="deviceSize"
+  [mobile]="mobile"
+  [transmitters]="
+    startOfFirstNodePosition === '3'
+      ? (transmitters | filter: { RokhNumber: '2' })
+      : (transmitters | filter: { RokhNumber: '2' } | reverse)
+  "
+  [ghamirs]="
+    startOfFirstNodePosition === '3'
+      ? (ghamirs | filter: { RokhNumber: '2' } | reverse)
+      : (ghamirs | filter: { RokhNumber: '2' })
+  "
+>
+</bu-kiln-rokh>
+<bu-kiln-rokh
+  [deviceSize]="deviceSize"
+  [mobile]="mobile"
+  [transmitters]="
+    startOfFirstNodePosition === '3'
+      ? (transmitters | filter: { RokhNumber: '1' } | reverse)
+      : (transmitters | filter: { RokhNumber: '1' })
+  "
+  [ghamirs]="
+    startOfFirstNodePosition === '3'
+      ? (ghamirs | filter: { RokhNumber: '1' })
+      : (ghamirs | filter: { RokhNumber: '1' } | reverse)
+  "
+>
+</bu-kiln-rokh>
+} @else {
+<bu-kiln-rokh
+  [deviceSize]="deviceSize"
+  [mobile]="mobile"
+  [transmitters]="
+    startOfFirstNodePosition === '1'
+      ? (transmitters | filter: { RokhNumber: '1' } | reverse)
+      : (transmitters | filter: { RokhNumber: '1' })
+  "
+  [ghamirs]="
+    startOfFirstNodePosition === '1'
+      ? (ghamirs | filter: { RokhNumber: '1' } )
+      : (ghamirs | filter: { RokhNumber: '1' } | reverse)
+  "
+>
+</bu-kiln-rokh>
+<bu-kiln-rokh
+  [deviceSize]="deviceSize"
+  [mobile]="mobile"
+  [transmitters]="
+    startOfFirstNodePosition === '1'
+      ? (transmitters | filter: { RokhNumber: '2' } )
+      : (transmitters | filter: { RokhNumber: '2' }| reverse)
+  "
+  [ghamirs]="
+    startOfFirstNodePosition === '1'
+      ? (ghamirs | filter: { RokhNumber: '2' } | reverse)
+      : (ghamirs | filter: { RokhNumber: '2' })
+  "
+>
+</bu-kiln-rokh>
+} }
