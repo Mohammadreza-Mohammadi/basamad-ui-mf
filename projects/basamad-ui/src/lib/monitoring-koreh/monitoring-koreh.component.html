@@ -11,8 +11,8 @@
 <ng-template #header let-layout94="layout94">
   <fd-toolbar [fdType]="'transparent'">
     <h4 fd-title>
-      @if('عنوان' | controlUi: layout94; as t2){
-      <bsu-layout-control [config]="t2"></bsu-layout-control>
+      @if (mo) {
+        {{ 'عنوان' | val: mo }}
       }
     </h4>
   </fd-toolbar>
