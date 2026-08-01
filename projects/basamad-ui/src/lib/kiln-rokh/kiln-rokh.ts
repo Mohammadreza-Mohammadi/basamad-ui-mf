@@ -1,385 +1,625 @@
 import {
+  AfterViewInit,
   ChangeDetectionStrategy,
   Component,
   ElementRef,
   EventEmitter,
-  inject,
   Input,
+  NgZone,
+  OnChanges,
+  OnDestroy,
   Output,
   SimpleChanges,
   ViewChild,
-  ViewEncapsulation,
-  AfterViewInit,
-  OnDestroy,
-  OnChanges,
-  Renderer2,
-  DOCUMENT,
+  computed,
+  signal,
 } from '@angular/core';
 import {
   AbbrevationDeviceSize,
   BaseComponent,
-  measureText,
-  measureTextBy,
   MetaobjectDataModel,
-  MoReportValuePipe,
 } from 'barsa-novin-ray-core';
 import { Ghamir, Sensor } from '../models';
-import { MapMoListToGhamirs } from '../constants';
-import { fromEvent, Subscription } from 'rxjs';
-import { debounceTime } from 'rxjs/operators';
+
+interface SceneSize {
+  width: number;
+  height: number;
+}
+
+interface ViewBox {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+interface Point {
+  x: number;
+  y: number;
+}
+
+interface SensorViewModel {
+  data: MetaobjectDataModel;
+  index: number;
+  x: number;
+  temperatureY: number;
+  active: boolean;
+}
+
+interface BrickViewModel {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+interface GhamirViewModel {
+  data: MetaobjectDataModel;
+  index: number;
+  centerX: number;
+  archPath: string;
+  fillId: string;
+  hasProduct: boolean;
+  cooking: boolean;
+  preheating: boolean;
+  cooling: boolean;
+  bricks: BrickViewModel[];
+}
+
+const SCENE_HEIGHT = 232;
+const SIDE_PADDING = 28;
+const ROKH_LABEL_WIDTH = 38;
+const SENSOR_PITCH = 34;
+const MIN_CONTENT_WIDTH = 640;
+const ARCH_BOTTOM = 184;
+const ARCH_SPRING = 139;
+const UPPER_TEMPERATURE_Y = 62;
+const LOWER_TEMPERATURE_Y = 188;
+
+let nextInstanceId = 0;
 
 @Component({
   selector: 'bu-kiln-rokh',
   standalone: false,
   templateUrl: './kiln-rokh.html',
   styleUrl: './kiln-rokh.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class KilnRokh
   extends BaseComponent
-  implements AfterViewInit, OnChanges, OnDestroy
+  implements OnChanges, AfterViewInit, OnDestroy
 {
-  @ViewChild('ghamirTrack', { static: true }) ghamirTrackRef!: ElementRef;
-  @ViewChild('sensorTrack', { static: false }) sensorTrackRef!: ElementRef;
-  @ViewChild('topshadowGap', { static: true }) topShadowGap!: ElementRef;
+  @ViewChild('svgRef', { static: true })
+  svgRef!: ElementRef<SVGSVGElement>;
 
-  @Input() mobile!: boolean;
-  @Input() allColumns!: any[];
-  @Input() rokhNumber!: number;
-  @Input() title!: string;
-  @Input() deviceSize!: AbbrevationDeviceSize;
-  @Input() ghamirs!: MetaobjectDataModel[];
-  @Input() transmitters!: MetaobjectDataModel[];
-  @Output() zoom = new EventEmitter();
+  @Input() mobile = false;
+  @Input() allColumns: any[] = [];
+  @Input() rokhNumber = 1;
+  @Input() title = '';
+  @Input() deviceSize: AbbrevationDeviceSize = 'xl';
+  @Input() ghamirs: MetaobjectDataModel[] = [];
+  @Input() transmitters: MetaobjectDataModel[] = [];
   @Input() mode: 'designer' | 'runtime' = 'designer';
-  private dragging: { type: 'sensor' | 'ghamir'; id: string } | null = null;
-  private dragOffsetX = 0;
+  @Output() zoom = new EventEmitter<void>();
 
-  gapGhamir!: number;
-  ghamirWidth!: number;
-  ghamirRangeDamaWidth!: number;
+  readonly scene = signal<SceneSize>({ width: 720, height: SCENE_HEIGHT });
+  readonly viewBox = signal<ViewBox>({
+    x: 0,
+    y: 0,
+    width: 720,
+    height: SCENE_HEIGHT,
+  });
+  readonly sensorVMs = signal<SensorViewModel[]>([]);
+  readonly ghamirVMs = signal<GhamirViewModel[]>([]);
 
-  // css sizing strings (ke template/to css variables estefade mishe)
-  fontSizeGhamir!: string;
-  fontSizeAjorGhamir!: string;
-  gradiantDamaFontsize!: string;
-  valvesSize!: string;
-  sizeAjorFontsize!: string;
-  protected _el = inject(ElementRef);
-  protected _renderer2 = inject(Renderer2);
+  readonly viewBoxAttr = computed(() => {
+    const viewBox = this.viewBox();
+    return `${viewBox.x} ${viewBox.y} ${viewBox.width} ${viewBox.height}`;
+  });
 
-  private resizeSub?: Subscription;
-  private ro?: ResizeObserver;
-  private document = inject(DOCUMENT);
+  readonly isZoomed = computed(
+    () => this.viewBox().width < this.scene().width - 0.5
+  );
 
-  ngOnInit(): void {
+  readonly zoomPercent = computed(() =>
+    Math.round((this.scene().width / this.viewBox().width) * 100)
+  );
+
+  /** 0: status only, 1: primary readings, 2: all details. */
+  readonly detailLevel = computed<0 | 1 | 2>(() => {
+    const pixelsPerSensor =
+      (this.viewportSize.width * SENSOR_PITCH) / this.viewBox().width;
+    if (pixelsPerSensor >= 21) return 2;
+    if (pixelsPerSensor >= 13) return 1;
+    return 0;
+  });
+
+  readonly ids = {
+    panel: `kiln-panel-${++nextInstanceId}`,
+    beam: `kiln-beam-${nextInstanceId}`,
+    archEmpty: `kiln-arch-empty-${nextInstanceId}`,
+    archLoaded: `kiln-arch-loaded-${nextInstanceId}`,
+    archPreheat: `kiln-arch-preheat-${nextInstanceId}`,
+    archCooking: `kiln-arch-cooking-${nextInstanceId}`,
+    archCooling: `kiln-arch-cooling-${nextInstanceId}`,
+    brick: `kiln-brick-${nextInstanceId}`,
+  };
+
+  private sensorsByGhamir = new Map<string, MetaobjectDataModel[]>();
+  private resizeObserver?: ResizeObserver;
+  private viewportSize = { width: 1200, height: SCENE_HEIGHT };
+  private readonly pointers = new Map<number, Point>();
+  private panLast: Point | null = null;
+  private pinchStart:
+    | { distance: number; viewBox: ViewBox; focus: Point }
+    | undefined;
+  private gestureMoved = false;
+
+  constructor(
+    private readonly host: ElementRef<HTMLElement>,
+    private readonly zone: NgZone
+  ) {
+    super();
+  }
+
+  override ngOnInit(): void {
     super.ngOnInit();
-    this._setRelativeLeft();
-    this.setOddShirNumber(this.transmitters);
-  }
-  ngAfterViewInit(): void {
-    // شروع observables / observers
-    // debounce روی resize برای کاهش بار
-    if ('fonts' in this.document) {
-      this.document.fonts.ready.then(() => {
-        this._calculateFontSize();
-        // موقعیت‌دهی مجازی‌ها
-        requestAnimationFrame(() => this.adjustVirtualPositions());
-      });
-    }
-
-    // 2. یک بازگشت به عقب (Fallback) ایمن برای مواقعی که API کار نمی‌کند یا فونت‌ها به سرعت لود می‌شوند
-    // این کد مطمئن می‌شود محاسبه حداقل یک بار انجام شود.
-    setTimeout(() => {
-      this._calculateFontSize();
-      // موقعیت‌دهی مجازی‌ها
-      requestAnimationFrame(() => this.adjustVirtualPositions());
-    }, 500); // 500 میلی‌ثانیه صبر می‌کنیم.
-
-    this.resizeSub = fromEvent(window, 'resize')
-      .pipe(debounceTime(80))
-      .subscribe(() => {
-        // محاسبه فونت و تنظیم مکان مجازی‌ها
-        this._calculateFontSize();
-        // موقعیت‌دهی مجازی‌ها
-        requestAnimationFrame(() => this.adjustVirtualPositions());
-      });
-
-    // اگر container تغییر اندازه پیدا کرد (مثلاً parent تغییر کنه)
-    try {
-      this.ro = new ResizeObserver(() => {
-        requestAnimationFrame(() => {
-          this._calculateFontSize();
-          this.adjustVirtualPositions();
-        });
-      });
-      if (this._el?.nativeElement) {
-        this.ro.observe(this._el.nativeElement);
-      }
-    } catch (e) {
-      // مرورگرهای خیلی قدیمی ممکنه ResizeObserver نداشته باشند
-      // در آنصورت rely به window resize می‌کنیم
-      // no-op
-    }
-
-    // initial calc (با تاخیر کوتاه تا ngFor رندر شود)
-    setTimeout(() => {
-      this._calculateFontSize();
-      this.adjustVirtualPositions();
-    }, 0);
+    this.rebuild();
   }
 
-  ngOnChanges(changes: SimpleChanges): void {
+  override ngOnChanges(changes: SimpleChanges): void {
     super.ngOnChanges(changes);
-    const { transmitters } = changes;
-    if (transmitters && !transmitters.firstChange) {
-      // بعد از تغییر داده‌ها محاسبه کن
-      this.setOddShirNumber(transmitters.currentValue);
-      setTimeout(() => {
-        this._calculateFontSize();
-        this.adjustVirtualPositions();
-      }, 0);
-    }
-  }
-  setOddShirNumber(transmitters): void {
-    let shirNodeIndex = 0;
-    transmitters.forEach((sensor) => {
-      if (sensor.ShirNode > 0 && sensor.ShirNode < 100) {
-        sensor.ShirNodeIsOdd = shirNodeIndex % 2 === 0;
-        shirNodeIndex++;
-      }
-    });
-  }
-
-  ngOnDestroy(): void {
-    if (this.resizeSub) this.resizeSub.unsubscribe();
-    if (this.ro) this.ro.disconnect();
-  }
-  _setRelativeLeft(): void {
-    this.transmitters.forEach((c, i) => {
-      c.RelativeLeft = c.RelativeLeft || (i + 0.08) / this.transmitters.length;
-    });
-    this.ghamirs.forEach((c, i) => {
-      c.RelativeLeft = c.RelativeLeft || (i + 0.08) / this.ghamirs.length;
-    });
-  }
-  /**
-   * محاسبهٔ دینامیک فونت/REM بر اساس عرض container و تعداد ghamirها
-   * نتیجه در CSS variables روی root element کامپوننت نوشته می‌شود (همان که template و scss شما از آن استفاده می‌کنند)
-   */
-  _calculateFontSize(): void {
-    try {
-      // اگر دیتایی وجود نداره کاری نمی‌کنیم
-      if (!this.ghamirs || this.ghamirs.length === 0) return;
-
-      const rootEl: HTMLElement = this._el.nativeElement;
-      const elWidth =
-        rootEl.offsetWidth ||
-        rootEl.getBoundingClientRect().width ||
-        window.innerWidth;
-      // مقداری حاشیه‌ی منطقی کم می‌کنیم تا overflow ایجاد نشود
-
-      // فاصله بین ghamirها از CSS متغیر گرفته می‌شود
-      const ghamirGapStr = getComputedStyle(document.body).getPropertyValue(
-        '--ghamir-gap'
-      );
-      const ghamirGap = Number(ghamirGapStr.replace('px', '')) || 2;
-
-      const containerRefWidth = Math.max(80, elWidth - ghamirGap * 2);
-      const sensorCount = this.transmitters.length+2;
-      const countOfGhamir = this.ghamirs.length + 2;
-
-      rootEl.style.setProperty(
-        '--topshadow-gap',
-        `${ghamirGap / (sensorCount / countOfGhamir)}px`
-      );
-
-      // شروع متغیرها
-      let remVal = 0.18; // rem اولیه (پایین‌تر باشه کارت‌ها رو خیلی ریز می‌کنه)
-      const step = 0.005; // گام افزایش REM
-      const maxRem = 2.5;
-
-      // محاسبهٔ عرض تقریبی متن در هر "ghamir"
-      // متن مرجع را '555' در نظر میگیریم (مثل کد اصلی شما)
-      let fontSizeGhamir = remVal;
-      while (true) {
-        // measureText از core استفاده می‌شود
-        const textWidthPx = measureTextBy(
-          '10 سانتی',
-          `${remVal}rem`,
-          'sahel-fd'
-        );
-
-        const totalWidth = (textWidthPx + ghamirGap) * countOfGhamir;
-
-        // اگر از عرض ظرف عبور کردیم، یک گام عقب برو و تموم کن
-        if (totalWidth >= containerRefWidth) {
-          fontSizeGhamir = Math.max(0.2, remVal - step); // حداقل 0.5rem
-          break;
-        }
-
-        // افزایش rem و ادامه
-        remVal += step;
-        if (remVal > maxRem) {
-          fontSizeGhamir = Math.min(maxRem, remVal);
-          break;
-        }
-      }
-      remVal = 0.18;
-      let fontSizeSensor = remVal;
-      while (true) {
-        // measureText از core استفاده می‌شود
-        const textWidthPx = measureTextBy('555', `${remVal}rem`, 'sahel-fd');
-        const extraTextWidthPx2 = measureTextBy(
-          '555',
-          `${remVal}rem`,
-          'sahel-fd'
-        );
-
-        const totalWidth =
-          textWidthPx * sensorCount +
-          this.topShadowGap.nativeElement.offsetWidth * sensorCount;
-
-        // اگر از عرض ظرف عبور کردیم، یک گام عقب برو و تموم کن
-        if (totalWidth >= elWidth - extraTextWidthPx2 * 2) {
-          fontSizeSensor = Math.max(0.2, remVal - step); // حداقل 0.5rem
-          break;
-        }
-        // افزایش rem و ادامه
-        remVal += step;
-        if (remVal > maxRem) {
-          fontSizeSensor = Math.min(maxRem, remVal);
-          break;
-        }
-      }
-
-      // تبدیل و ست کردن CSS variables (همان اسامی که در استایل‌های شما استفاده می‌شد)
-      // توجه: بعضی متغیرها را همانند کد قبلیت تنظیم کردم
-      rootEl.style.setProperty('--klink-sizeAjor-size', `${fontSizeGhamir}rem`);
-
-      const fontSizeAjorGhamir = `${Math.max(
-        0.7,
-        Math.min(1.4, fontSizeGhamir - 0.05)
-      )}rem`;
-      rootEl.style.setProperty('--klink-sizeAjor-fontsize', fontSizeAjorGhamir);
-      this.sizeAjorFontsize = fontSizeAjorGhamir;
-
-      rootEl.style.setProperty(
-        '--klink-sizeAjor-nimeh-fontsize',
-        `${fontSizeGhamir / 2}rem`
-      );
-
-      rootEl.style.setProperty(
-        '--klink-gradiant-dama-fontsize',
-        `calc(${fontSizeAjorGhamir} + var(--ghamir-gap) / 2)`
-      );
-      this.gradiantDamaFontsize = `calc(${fontSizeAjorGhamir} + var(--ghamir-gap) / 2)`;
-
-      rootEl.style.setProperty(
-        '--klink-ghamir-fontsize',
-        `${Math.min(fontSizeGhamir, 1)}rem`
-      );
-
-      rootEl.style.setProperty(
-        '--klink-valves-number-fontsize',
-        `${Math.min(fontSizeGhamir, 1)}rem`
-      );
-
-      rootEl.style.setProperty(
-        '--klink-valves-size',
-        `${Math.min(fontSizeGhamir, 2)}rem`
-      );
-      this.valvesSize = `${Math.min(fontSizeGhamir, 2)}rem`;
-
-      // sensor dama font
-      rootEl.style.setProperty(
-        '--klink-sensor-dama-fontsize',
-        `${Math.min(fontSizeSensor, 2)}rem`
-      );
-      rootEl.style.setProperty(
-        '--klink-sensor-dama-div-fontsize',
-        `${Math.min(fontSizeSensor, 1)}rem`
-      );
-
-      rootEl.style.setProperty(
-        '--klink-sensor-alarm-size',
-        `${fontSizeGhamir}rem`
-      );
-
-      // محاسبه ابعاد ghamir و ghamirRangeDamaWidth مشابه کد قبلی
-      this.ghamirWidth = Math.floor(
-        (containerRefWidth - countOfGhamir * ghamirGap - ghamirGap) /
-          countOfGhamir
-      );
-      this.ghamirRangeDamaWidth = Math.round(
-        elWidth / Math.max(1, countOfGhamir)
-      );
-      // gapGhamir را هم می‌توانیم ثبت کنیم (در صورت نیاز)
-      this.gapGhamir = ghamirGap;
-      this._renderer2.setStyle(
-        this.ghamirTrackRef.nativeElement,
-        'height',
-        this.ghamirTrackRef.nativeElement.firstChild.offsetHeight + 'px'
-      );
-
-      // اگر نیاز به تشخیص بهتر باشد، می‌توان scaleFactor را بر اساس viewport تنظیم کرد
-    } catch (err) {
-      // fail-safe: اگر خطایی پیش آمد، از مقادیر پیش‌فرض استفاده کن
-      // console.warn('calc font size failed', err);
+    if (changes['transmitters'] || changes['ghamirs']) {
+      this.rebuild();
     }
   }
 
-  /**
-   * برای هر کارت بررسی می‌کند آیا عنصر virtual وجود دارد و اگر نزدیک لبه باشد کلاس left/right را تنظیم می‌کند.
-   * این تابع فرض می‌کند در template شما (یا بعداً) عنصری با کلاس .sensor-virtual وجود دارد؛
-   * در غیر اینصورت هیچ کاری انجام نخواهد شد و template اصلی‌تان نیاز به تغییر ندارد.
-   */
-  adjustVirtualPositions(): void {
-    try {
-      if (!this._el || !this._el.nativeElement) return;
-      const rootRect = this._el.nativeElement.getBoundingClientRect();
-      const vw = window.innerWidth;
-      // تلاش می‌کنیم کارت‌ها را بر اساس کلاس موجود در template پیدا کنیم.
-      // در template شما کارت‌های ghamir داخل .klin-ghamir-info رندر می‌شوند.
-      const cards: NodeListOf<HTMLElement> =
-        this._el.nativeElement.querySelectorAll('.klin-ghamir-info');
+  ngAfterViewInit(): void {
+    this.observeSize();
+  }
 
-      cards.forEach((card: HTMLElement) => {
-        // در template اولیه ممکن است مقدار مجازی یک عنصر مجزا نداشته باشه؛
-        // ما سعی می‌کنیم دنبال .sensor-virtual (که در صورت اضافه بودن توسط template یا بعداً موجود است) بگردیم.
-        const virt = card.querySelector(
-          '.sensor-virtual'
-        ) as HTMLElement | null;
-        if (!virt) {
-          // fallback: گاهی ممکن است virtual به شکل دیگری اضافه شده باشد؛ امتحان کن .sizeAjorText که زیر مقدار است
-          // اما این fallback فقط در صورت نیاز فعال می‌شود. در غیر اینصورت از کار صرف‌نظر می‌شود.
-          return;
-        }
+  override ngOnDestroy(): void {
+    this.resizeObserver?.disconnect();
+    super.ngOnDestroy();
+  }
 
-        const rect = card.getBoundingClientRect();
-        const approxVirt = Math.min(80, vw * 0.06);
-        if (rect.right + approxVirt > vw - 6) {
-          virt.classList.add('left');
-          virt.classList.remove('right');
-        } else if (rect.left - approxVirt < 6) {
-          virt.classList.add('right');
-          virt.classList.remove('left');
-        } else {
-          virt.classList.remove('left', 'right');
-        }
-      });
-    } catch (e) {
-      // ignore
+  sensorsFor(ghamir: MetaobjectDataModel): MetaobjectDataModel[] {
+    return this.sensorsByGhamir.get(this.ghamirKey(ghamir)) ?? [];
+  }
+
+  hasValve(sensor: MetaobjectDataModel): boolean {
+    const valveNumber = Number(sensor.ShirNode);
+    return valveNumber > 0 && valveNumber < 100;
+  }
+
+  valveClass(sensor: MetaobjectDataModel): string {
+    return `svg-valve--${sensor.RangShir || '0'}`;
+  }
+
+  signedValue(value: unknown): string {
+    const numericValue = Number(value);
+    if (!Number.isFinite(numericValue)) return String(value ?? '');
+    return numericValue > 0 ? `+${numericValue}` : String(numericValue);
+  }
+
+  sensorHasError(sensor: MetaobjectDataModel): boolean {
+    return !!(
+      sensor.Error ||
+      sensor.TransmitterFailed ||
+      sensor.TermokoplFailed ||
+      Number(sensor.Value) >= 2000
+    );
+  }
+
+  isCookValueVisible(sensor: MetaobjectDataModel): boolean {
+    if (typeof sensor.$ShowAdadPokht === 'boolean') {
+      return sensor.$ShowAdadPokht;
+    }
+
+    return this.sensorGroupIsActive(sensor);
+  }
+
+  toggleCookValue(sensor: MetaobjectDataModel): void {
+    sensor.$ShowAdadPokht = !this.isCookValueVisible(sensor);
+  }
+
+  onTemperatureClick(event: MouseEvent, sensor: MetaobjectDataModel): void {
+    event.stopPropagation();
+    if (this.gestureMoved) return;
+    this.toggleCookValue(sensor);
+  }
+
+  onTemperatureKeydown(
+    event: KeyboardEvent,
+    sensor: MetaobjectDataModel
+  ): void {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    event.preventDefault();
+    this.toggleCookValue(sensor);
+  }
+
+  ghamirIsCooking(ghamir: MetaobjectDataModel): boolean {
+    return this.sensorsFor(ghamir).some((sensor) => this.hasValve(sensor));
+  }
+
+  ghamirIsPreheating(ghamir: MetaobjectDataModel): boolean {
+    return (
+      !this.ghamirIsCooking(ghamir) &&
+      this.sensorsFor(ghamir).some((sensor) => !!sensor.Pishgarm)
+    );
+  }
+
+  ghamirIsCooling(ghamir: MetaobjectDataModel): boolean {
+    if (this.ghamirIsCooking(ghamir) || this.ghamirIsPreheating(ghamir)) {
+      return false;
+    }
+
+    const sensors = this.sensorsFor(ghamir);
+    const isPostHeating = sensors.some((sensor) => !!sensor.Pasagarm);
+    const validTemperatures = sensors
+      .filter((sensor) => !sensor.IsMajazi)
+      .map((sensor) => Number(sensor.Value))
+      .filter((value) => Number.isFinite(value) && value < 2000);
+    const isBelowCoolingThreshold =
+      validTemperatures.length > 0 && Math.max(...validTemperatures) < 300;
+
+    return isPostHeating || isBelowCoolingThreshold;
+  }
+
+  ghamirHasProduct(ghamir: MetaobjectDataModel): boolean {
+    return (
+      ghamir.GhamirStatusText !== 'خالی' &&
+      !!String(ghamir.Mahsol?.$Caption ?? '').trim()
+    );
+  }
+
+  fitToView(): void {
+    const scene = this.scene();
+    this.viewBox.set({ x: 0, y: 0, width: scene.width, height: scene.height });
+  }
+
+  zoomBy(factor: number): void {
+    const viewBox = this.viewBox();
+    this.applyZoom(
+      factor,
+      viewBox.x + viewBox.width / 2,
+      viewBox.y + viewBox.height / 2
+    );
+  }
+
+  onWheel(event: WheelEvent): void {
+    event.preventDefault();
+    const focus = this.clientToSvg(event.clientX, event.clientY);
+    this.applyZoom(event.deltaY < 0 ? 0.84 : 1 / 0.84, focus.x, focus.y);
+  }
+
+  onPointerDown(event: PointerEvent): void {
+    if (event.pointerType === 'mouse' && event.button !== 0) return;
+    this.pointers.set(event.pointerId, {
+      x: event.clientX,
+      y: event.clientY,
+    });
+    this.gestureMoved = false;
+
+    if (this.pointers.size === 2) {
+      this.beginPinch();
+    } else {
+      this.panLast = { x: event.clientX, y: event.clientY };
     }
   }
 
-  /********** متدهای کمکی **********/
-  onShowTransmitter(sensor: Sensor): void {
-    // placeholder
+  onPointerMove(event: PointerEvent): void {
+    const previous = this.pointers.get(event.pointerId);
+    if (!previous) return;
+
+    if (
+      Math.abs(event.clientX - previous.x) > 2 ||
+      Math.abs(event.clientY - previous.y) > 2
+    ) {
+      this.gestureMoved = true;
+      try {
+        this.svgRef.nativeElement.setPointerCapture?.(event.pointerId);
+      } catch {
+        // Pointer capture is an enhancement; panning still works without it.
+      }
+    }
+
+    this.pointers.set(event.pointerId, {
+      x: event.clientX,
+      y: event.clientY,
+    });
+
+    if (this.pointers.size >= 2 && this.pinchStart) {
+      this.updatePinch();
+      return;
+    }
+
+    if (!this.panLast || !this.isZoomed()) return;
+    const from = this.clientToSvg(this.panLast.x, this.panLast.y);
+    const to = this.clientToSvg(event.clientX, event.clientY);
+    const viewBox = this.viewBox();
+    this.panLast = { x: event.clientX, y: event.clientY };
+    this.setViewBox({
+      ...viewBox,
+      x: viewBox.x + from.x - to.x,
+      y: viewBox.y + from.y - to.y,
+    });
   }
-  onSabtChideman(ghamir: Ghamir): void {
-    // placeholder
+
+  onPointerUp(event: PointerEvent): void {
+    this.pointers.delete(event.pointerId);
+    if (this.pointers.size < 2) this.pinchStart = undefined;
+    if (this.pointers.size === 0) {
+      this.panLast = null;
+    } else {
+      const point = [...this.pointers.values()][0];
+      this.panLast = { ...point };
+    }
   }
-  onSabtPokht(ghamir: Ghamir): void {
-    // placeholder
+
+  onShowTransmitter(_sensor: Sensor): void {}
+  onSabtChideman(_ghamir: Ghamir): void {}
+  onSabtPokht(_ghamir: Ghamir): void {}
+
+  private rebuild(): void {
+    this.buildSensorGroups();
+
+    const sensorCount = Math.max(1, this.transmitters?.length ?? 0);
+    const contentWidth = Math.max(MIN_CONTENT_WIDTH, sensorCount * SENSOR_PITCH);
+    const width = SIDE_PADDING * 2 + contentWidth + ROKH_LABEL_WIDTH;
+    const previousScene = this.scene();
+    const previousViewBox = this.viewBox();
+    const wasZoomed = previousViewBox.width < previousScene.width - 0.5;
+    const nextScene = { width, height: SCENE_HEIGHT };
+
+    const sensorCellWidth = contentWidth / sensorCount;
+    const sensors = (this.transmitters ?? []).map((data, index) => ({
+      data,
+      index,
+      // The former CSS grid inherited RTL direction. Keep that visual contract:
+      // the first item in the ordered input array starts from the right.
+      x: SIDE_PADDING + sensorCellWidth * (sensorCount - index - 0.5),
+      temperatureY:
+        index % 2 === 0 ? UPPER_TEMPERATURE_Y : LOWER_TEMPERATURE_Y,
+      active: this.sensorGroupIsActive(data),
+    }));
+
+    const ghamirCount = Math.max(1, this.ghamirs?.length ?? 0);
+    const ghamirSlotWidth = contentWidth / ghamirCount;
+    const ghamirs = (this.ghamirs ?? []).map((data, index) => {
+      const visualIndex = ghamirCount - index - 1;
+      const left = SIDE_PADDING + visualIndex * ghamirSlotWidth + 3;
+      const right = SIDE_PADDING + (visualIndex + 1) * ghamirSlotWidth - 3;
+      const radiusX = (right - left) / 2;
+      const cooking = this.ghamirIsCooking(data);
+      const preheating = this.ghamirIsPreheating(data);
+      const cooling = this.ghamirIsCooling(data);
+      const hasProduct = this.ghamirHasProduct(data);
+      const fillId = cooking
+        ? this.ids.archCooking
+        : preheating
+          ? this.ids.archPreheat
+          : cooling
+            ? this.ids.archCooling
+            : hasProduct
+              ? this.ids.archLoaded
+              : this.ids.archEmpty;
+
+      return {
+        data,
+        index,
+        centerX: left + radiusX,
+        archPath:
+          `M ${left} ${ARCH_BOTTOM} L ${left} ${ARCH_SPRING} ` +
+          `A ${radiusX} 42 0 0 1 ${right} ${ARCH_SPRING} ` +
+          `L ${right} ${ARCH_BOTTOM} Z`,
+        fillId,
+        hasProduct,
+        cooking,
+        preheating,
+        cooling,
+        bricks: hasProduct
+          ? this.buildBricks(left, right, ARCH_BOTTOM)
+          : [],
+      } satisfies GhamirViewModel;
+    });
+
+    this.scene.set(nextScene);
+    this.sensorVMs.set(sensors);
+    this.ghamirVMs.set(ghamirs);
+
+    if (!wasZoomed || previousScene.width <= 0) {
+      this.fitToView();
+      return;
+    }
+
+    const widthRatio = previousViewBox.width / previousScene.width;
+    const centerRatio =
+      (previousViewBox.x + previousViewBox.width / 2) / previousScene.width;
+    const nextWidth = width * widthRatio;
+    this.setViewBox({
+      x: centerRatio * width - nextWidth / 2,
+      y: previousViewBox.y,
+      width: nextWidth,
+      height: previousViewBox.height,
+    });
+  }
+
+  private buildSensorGroups(): void {
+    const groups = new Map<string, MetaobjectDataModel[]>();
+
+    for (const sensor of this.transmitters ?? []) {
+      const key = this.ghamirKey(sensor.Ghamir ?? sensor);
+      const group = groups.get(key) ?? [];
+      group.push(sensor);
+      groups.set(key, group);
+    }
+
+    for (const group of groups.values()) {
+      group.sort(
+        (a, b) =>
+          Number(!!a.IsMajazi) - Number(!!b.IsMajazi) ||
+          Number(a.SlaveAddress) - Number(b.SlaveAddress)
+      );
+    }
+
+    this.sensorsByGhamir = groups;
+  }
+
+  private sensorGroupIsActive(sensor: MetaobjectDataModel): boolean {
+    const group = this.sensorsFor(sensor.Ghamir ?? sensor);
+    return group.some(
+      (groupSensor) => this.hasValve(groupSensor) || !!groupSensor.Pishgarm
+    );
+  }
+
+  private buildBricks(
+    left: number,
+    right: number,
+    bottom: number
+  ): BrickViewModel[] {
+    const horizontalPadding = Math.max(6, (right - left) * 0.2);
+    const stackLeft = left + horizontalPadding;
+    const stackWidth = right - left - horizontalPadding * 2;
+    const columns = 4;
+    const rows = 3;
+    const gap = 1.5;
+    const brickWidth = (stackWidth - gap * (columns - 1)) / columns;
+    const brickHeight = 6;
+    const bricks: BrickViewModel[] = [];
+
+    for (let row = 0; row < rows; row++) {
+      const rowColumns = row % 2 === 0 ? columns : columns - 1;
+      const rowWidth =
+        rowColumns * brickWidth + Math.max(0, rowColumns - 1) * gap;
+      const rowLeft = left + (right - left - rowWidth) / 2;
+      for (let column = 0; column < rowColumns; column++) {
+        bricks.push({
+          x: rowLeft + column * (brickWidth + gap),
+          y: bottom - 38 - row * (brickHeight + gap),
+          width: brickWidth,
+          height: brickHeight,
+        });
+      }
+    }
+
+    return bricks;
+  }
+
+  private observeSize(): void {
+    const updateSize = (width: number, height: number) => {
+      this.viewportSize = {
+        width: Math.max(1, width),
+        height: Math.max(1, height),
+      };
+      // viewBox is set to itself so computed LOD is recalculated on resize.
+      this.viewBox.set({ ...this.viewBox() });
+    };
+
+    const element = this.host.nativeElement;
+    updateSize(element.clientWidth || 1200, element.clientHeight || SCENE_HEIGHT);
+    if (typeof ResizeObserver === 'undefined') return;
+
+    this.resizeObserver = new ResizeObserver((entries) => {
+      const rect = entries[0]?.contentRect;
+      if (!rect) return;
+      this.zone.run(() => updateSize(rect.width, rect.height));
+    });
+    this.resizeObserver.observe(element);
+  }
+
+  private beginPinch(): void {
+    const points = [...this.pointers.values()];
+    for (const pointerId of this.pointers.keys()) {
+      try {
+        this.svgRef.nativeElement.setPointerCapture?.(pointerId);
+      } catch {
+        // Some browsers capture only after the first pointer move.
+      }
+    }
+    const distance = Math.hypot(
+      points[0].x - points[1].x,
+      points[0].y - points[1].y
+    );
+    const focus = this.clientToSvg(
+      (points[0].x + points[1].x) / 2,
+      (points[0].y + points[1].y) / 2
+    );
+    this.pinchStart = { distance, viewBox: this.viewBox(), focus };
+    this.panLast = null;
+  }
+
+  private updatePinch(): void {
+    if (!this.pinchStart) return;
+    const points = [...this.pointers.values()];
+    const distance = Math.hypot(
+      points[0].x - points[1].x,
+      points[0].y - points[1].y
+    );
+    const factor = this.pinchStart.distance / Math.max(1, distance);
+    const start = this.pinchStart.viewBox;
+    this.applyZoomFrom(
+      start,
+      factor,
+      this.pinchStart.focus.x,
+      this.pinchStart.focus.y
+    );
+  }
+
+  private applyZoom(factor: number, focusX: number, focusY: number): void {
+    this.applyZoomFrom(this.viewBox(), factor, focusX, focusY);
+  }
+
+  private applyZoomFrom(
+    start: ViewBox,
+    factor: number,
+    focusX: number,
+    focusY: number
+  ): void {
+    const scene = this.scene();
+    const minimumWidth = Math.max(170, scene.width * 0.08);
+    const width = this.clamp(start.width * factor, minimumWidth, scene.width);
+    const viewportAspect = this.viewportSize.width / this.viewportSize.height;
+    const height = Math.min(
+      scene.height,
+      Math.max(72, width / Math.max(0.5, viewportAspect))
+    );
+    const x = focusX - ((focusX - start.x) * width) / start.width;
+    const y = focusY - ((focusY - start.y) * height) / start.height;
+
+    this.setViewBox({ x, y, width, height });
+  }
+
+  private setViewBox(viewBox: ViewBox): void {
+    const scene = this.scene();
+    const width = this.clamp(viewBox.width, 1, scene.width);
+    const height = this.clamp(viewBox.height, 1, scene.height);
+    const x = this.clamp(viewBox.x, 0, Math.max(0, scene.width - width));
+    const y = this.clamp(viewBox.y, 0, Math.max(0, scene.height - height));
+    this.viewBox.set({ x, y, width, height });
+  }
+
+  private clientToSvg(clientX: number, clientY: number): Point {
+    const svg = this.svgRef.nativeElement;
+    const matrix = svg.getScreenCTM();
+    if (matrix) {
+      const point = new DOMPoint(clientX, clientY).matrixTransform(matrix.inverse());
+      return { x: point.x, y: point.y };
+    }
+
+    const rect = svg.getBoundingClientRect();
+    const viewBox = this.viewBox();
+    return {
+      x: viewBox.x + ((clientX - rect.left) / rect.width) * viewBox.width,
+      y: viewBox.y + ((clientY - rect.top) / rect.height) * viewBox.height,
+    };
+  }
+
+  private ghamirKey(value: MetaobjectDataModel): string {
+    return String(value?.Id ?? value?.$Caption ?? value?.Number ?? '');
+  }
+
+  private clamp(value: number, minimum: number, maximum: number): number {
+    return Math.min(maximum, Math.max(minimum, value));
   }
 }

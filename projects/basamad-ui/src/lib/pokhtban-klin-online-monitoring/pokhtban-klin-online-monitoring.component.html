@@ -13,6 +13,8 @@
 
 }@else{ @if(startOfFirstNodePosition==='3' || startOfFirstNodePosition==='4') {
 <bu-kiln-rokh
+  [title]="title"
+  [rokhNumber]="2"
   [deviceSize]="deviceSize"
   [mobile]="mobile"
   [transmitters]="
@@ -22,12 +24,14 @@
   "
   [ghamirs]="
     startOfFirstNodePosition === '3'
-      ? (ghamirs | filter: { RokhNumber: '2' } | reverse)
-      : (ghamirs | filter: { RokhNumber: '2' })
+      ? (ghamirs | filter: { RokhNumber: '2' })
+      : (ghamirs | filter: { RokhNumber: '2' } | reverse)
   "
 >
 </bu-kiln-rokh>
 <bu-kiln-rokh
+  [title]="title"
+  [rokhNumber]="1"
   [deviceSize]="deviceSize"
   [mobile]="mobile"
   [transmitters]="
@@ -37,13 +41,15 @@
   "
   [ghamirs]="
     startOfFirstNodePosition === '3'
-      ? (ghamirs | filter: { RokhNumber: '1' })
-      : (ghamirs | filter: { RokhNumber: '1' } | reverse)
+      ? (ghamirs | filter: { RokhNumber: '1' } | reverse)
+      : (ghamirs | filter: { RokhNumber: '1' })
   "
 >
 </bu-kiln-rokh>
 } @else {
 <bu-kiln-rokh
+  [title]="title"
+  [rokhNumber]="1"
   [deviceSize]="deviceSize"
   [mobile]="mobile"
   [transmitters]="
@@ -53,12 +59,14 @@
   "
   [ghamirs]="
     startOfFirstNodePosition === '1'
-      ? (ghamirs | filter: { RokhNumber: '1' } )
-      : (ghamirs | filter: { RokhNumber: '1' } | reverse)
+      ? (ghamirs | filter: { RokhNumber: '1' } | reverse)
+      : (ghamirs | filter: { RokhNumber: '1' })
   "
 >
 </bu-kiln-rokh>
 <bu-kiln-rokh
+  [title]="title"
+  [rokhNumber]="2"
   [deviceSize]="deviceSize"
   [mobile]="mobile"
   [transmitters]="
@@ -68,8 +76,8 @@
   "
   [ghamirs]="
     startOfFirstNodePosition === '1'
-      ? (ghamirs | filter: { RokhNumber: '2' } | reverse)
-      : (ghamirs | filter: { RokhNumber: '2' })
+      ? (ghamirs | filter: { RokhNumber: '2' })
+      : (ghamirs | filter: { RokhNumber: '2' } | reverse)
   "
 >
 </bu-kiln-rokh>

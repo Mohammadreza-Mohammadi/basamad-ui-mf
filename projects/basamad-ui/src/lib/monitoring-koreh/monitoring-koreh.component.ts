@@ -14,6 +14,8 @@ import Panzoom from '@panzoom/panzoom';
 import {
   FormPropsBaseComponent,
   FormPanelService,
+  ControlUiPipe,
+  ScrollLayoutContextHolder,
 } from 'barsa-novin-ray-core';
 
 
@@ -23,7 +25,7 @@ declare const bootstrap: any;
   standalone: false,
   templateUrl: './monitoring-koreh.component.html',
   styleUrls: ['./monitoring-koreh.component.scss'],
-  providers: [FormPanelService],
+  providers: [FormPanelService, ControlUiPipe,ScrollLayoutContextHolder],
 })
 export class MonitoringKorehComponent
   extends FormPropsBaseComponent

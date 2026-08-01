@@ -4,7 +4,8 @@ import {
   NO_ERRORS_SCHEMA,
 } from '@angular/core';
 
-export { FormModule, FundamentalNgxCoreModule } from '@fundamental-ngx/core';
+export { FundamentalNgxCoreModule } from '@fundamental-ngx/core';
+export { FormModule } from '@fundamental-ngx/core/form';
 import {
   BarsaNovinRayCoreModule,
   BaseModule,
@@ -36,7 +37,8 @@ import {
   KilnAlignerComponent,
   KilnRokh
 } from './components';
-import { FormModule, FundamentalNgxCoreModule } from '@fundamental-ngx/core';
+import { FundamentalNgxCoreModule } from '@fundamental-ngx/core';
+import { FormModule } from '@fundamental-ngx/core/form';
 import { FormsModule } from '@fundamental-ngx/cdk/forms';
 import { RouterModule } from '@angular/router';
 

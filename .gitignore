@@ -5,6 +5,7 @@
 /dist
 /out-tsc
 /tmp
+/remote-entries
 
 # Native Federation
 /projects/basamad-ui/.angular
@@ -20,3 +21,5 @@
 *.log
 .DS_Store
 Thumbs.db
+/.chrome*
+/.edge-*

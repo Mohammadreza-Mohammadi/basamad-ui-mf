@@ -1,9 +1,9 @@
 {
   "name": "basamad-ui",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "peerDependencies": {
-    "@angular/common": "^20.0.0",
-    "@angular/core": "^20.0.0",
+    "@angular/common": "^22.0.0",
+    "@angular/core": "^22.0.0",
     "barsa-novin-ray-core": "*"
   },
   "dependencies": {

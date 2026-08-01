@@ -3,7 +3,7 @@
 `basamad-ui` به‌صورت یک **Native Federation remote** مستقل — الگوبرداری‌شده از `BarsaSvgMapReport`
 (در ریپوی `ng-web-systemsaz-1`) اما به‌عنوان یک workspace کاملاً جدا و مستقل با گیت خودش.
 
-روی **Angular 20** ساخته شده (منطبق با سورس `basamad-ui` و وابستگی‌های `barsa-*` / `@fundamental-ngx`).
+روی **Angular 22** ساخته شده (منطبق با پروژه‌ی میزبان `ng-web-systemsaz-1` و وابستگی‌های `barsa-*` / `@fundamental-ngx`).
 
 ## پروژه‌ها (`angular.json`)
 
@@ -17,6 +17,8 @@ npm install
 
 # build خروجی remote (dist/basamad-ui-mf) — remoteEntry.json اینجا ساخته می‌شه
 npm run build
+# versioned zip: remote-entries/basamad-ui/v<version>/basamad-ui-v<version>.zip
+# each production build automatically increments the patch version
 
 # dev-server محلی روی پورت 4202
 npm run serve

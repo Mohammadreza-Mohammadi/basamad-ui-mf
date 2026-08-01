@@ -1,200 +1,257 @@
-<div class="tw-invisible" #topshadowGap style="width:var(--topshadow-gap)"></div>
-<div class="wrapper">
-  <div class="top-shadow"></div>
-  <div class="top-shadow2" #sensorTrack>
-    @for(sensor of transmitters ;track sensor.Id;let odd=$odd){
-    <div class="sensor-container2">
-      <div
-        class="sensor-container tw-flex tw-w-full tw-relative tw-justify-center"
-        [class.highlight-pokht]="sensor.ShirNode > 0 && sensor.ShirNode < 100"
-        [class.highlight-pishgarm]="sensor.Pishgarm"
-        [class.low-dama]="sensor.Value < 150"
-        [class.isMajazi]="sensor.IsMajazi"
-      >
-        <svg
-          [attr.width]="deviceSize === 'xl' || deviceSize === 'l' ? 12 : 6"
-          [attr.height]="deviceSize === 'xl' || deviceSize === 'l' ? 12 : 6"
-          viewBox="0 0 12 12"
-          xmlns="http://www.w3.org/2000/svg"
-          [class.invisible]="sensor.IsMajazi"
+<section
+  class="kiln-stage"
+  [class.kiln-stage--zoomed]="isZoomed()"
+  [class.kiln-stage--mobile]="mobile"
+>
+  <svg
+    #svgRef
+    class="kiln-stage__svg"
+    [attr.viewBox]="viewBoxAttr()"
+    preserveAspectRatio="xMidYMid meet"
+    role="img"
+    [attr.aria-label]="'نمای مانیتورینگ کوره، رخ ' + rokhNumber"
+    (wheel)="onWheel($event)"
+    (pointerdown)="onPointerDown($event)"
+    (pointermove)="onPointerMove($event)"
+    (pointerup)="onPointerUp($event)"
+    (pointercancel)="onPointerUp($event)"
+    (dblclick)="fitToView()"
+  >
+    <defs>
+      <linearGradient [attr.id]="ids.panel" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#1a2b39" />
+        <stop offset="1" stop-color="#0e1a24" />
+      </linearGradient>
+      <linearGradient [attr.id]="ids.beam" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#2a3c4b" />
+        <stop offset="1" stop-color="#101c26" />
+      </linearGradient>
+      <radialGradient [attr.id]="ids.archEmpty" cx="50%" cy="100%" r="90%">
+        <stop offset="0" stop-color="#172733" />
+        <stop offset="1" stop-color="#09131b" />
+      </radialGradient>
+      <radialGradient [attr.id]="ids.archLoaded" cx="50%" cy="100%" r="90%">
+        <stop offset="0" stop-color="#243744" />
+        <stop offset="1" stop-color="#101922" />
+      </radialGradient>
+      <radialGradient [attr.id]="ids.archPreheat" cx="50%" cy="100%" r="92%">
+        <stop offset="0" stop-color="#4b3b58" />
+        <stop offset="0.58" stop-color="#272334" />
+        <stop offset="1" stop-color="#111621" />
+      </radialGradient>
+      <radialGradient [attr.id]="ids.archCooking" cx="50%" cy="100%" r="92%">
+        <stop offset="0" stop-color="#8c4d1e" />
+        <stop offset="0.58" stop-color="#382718" />
+        <stop offset="1" stop-color="#151715" />
+      </radialGradient>
+      <radialGradient [attr.id]="ids.archCooling" cx="50%" cy="100%" r="92%">
+        <stop offset="0" stop-color="#17668f" />
+        <stop offset="0.58" stop-color="#183d55" />
+        <stop offset="1" stop-color="#101b25" />
+      </radialGradient>
+      <linearGradient [attr.id]="ids.brick" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#d27a43" />
+        <stop offset="1" stop-color="#713820" />
+      </linearGradient>
+    </defs>
+
+    <rect
+      x="1"
+      y="1"
+      [attr.width]="scene().width - 2"
+      [attr.height]="scene().height - 2"
+      rx="5"
+      [attr.fill]="'url(#' + ids.panel + ')'"
+      class="stage-background"
+    />
+
+    <rect
+      x="8"
+      y="6"
+      [attr.width]="scene().width - 54"
+      height="26"
+      rx="3"
+      [attr.fill]="'url(#' + ids.beam + ')'"
+      class="sensor-beam"
+    />
+
+    <line
+      x1="9"
+      y1="184"
+      [attr.x2]="scene().width - 47"
+      y2="184"
+      class="kiln-floor-line"
+    />
+
+    <g class="ghamir-layer">
+      @for (vm of ghamirVMs(); track vm.data.Id) {
+        <g
+          class="ghamir"
+          [class.ghamir--cooking]="vm.cooking"
+          [class.ghamir--preheating]="vm.preheating"
+          [class.ghamir--cooling]="vm.cooling"
+          [class.ghamir--loaded]="vm.hasProduct"
         >
-          <rect
-            x="5"
-            y="1"
-            width="2"
-            height="8"
-            fill="#ccc"
-            stroke="#333"
-            stroke-width="0.5"
+          <path
+            [attr.d]="vm.archPath"
+            [attr.fill]="'url(#' + vm.fillId + ')'"
+            class="ghamir__arch"
           />
 
-          <circle
-            cx="6"
-            cy="10"
-            r="2"
-            [attr.fill]="sensor.Value | damaColor"
-            stroke="#333"
-            stroke-width="0.5"
-          />
-        </svg>
-
-        <span class="sensor-number" [class.error]="sensor.Value > 2000"
-          >{{ sensor.SlaveAddress }}</span
-        >
-        <img
-          *ngIf="
-            sensor.Value > 2000 ||
-            sensor.Error ||
-            sensor.TransmitterFailed ||
-            sensor.TermokoplFailed
-          "
-          class="sensor-alarm"
-          src="/assets/svg/monitoring/al-s-dama.svg"
-        />
-        @if(sensor.ShirNode>0 && sensor.ShirNode<100){
-        @if(sensor.ShirNodeIsOdd){
-        <div class="valves-container tw-relative invisible">
-          <span class="valves-number">{{ sensor.ShirNode }}</span>
-        </div>
-        }
-        <div class="valves-container tw-relative">
-          <span class="valves-number">
-            <span class="invisible">555</span>
-            <span class="tw-w-full" [ngClass]="'c' + sensor.RangShir">
-              {{ sensor.ShirNode }}</span
-            >
-          </span>
-        </div>
-        }
-      </div>
-      <span class="sensor-dama invisible disabled">555</span>
-      @if(sensor.Value < 2000){
-      <span
-        class="sensor-dama"
-        [class.odd]="odd"
-        (click)="sensor.$ShowAdadPokht=!sensor.$ShowAdadPokht"
-      >
-        <span class="invisible tw-h-0">555</span>
-        <div class="damacontainer"
-          style="
-            font-size: var(--klink-sensor-dama-div-fontsize);
-            background: white;
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-          "
-        >
-          <span class="tw-text-center">{{ sensor.Value }}</span>
-
-          @if(odd){ @if(sensor.$ShowAdadPokht){
-          <span class="tw-text-center tw-relative">{{ sensor.AdadPokht }}</span>
-          } }@else{
-          <span class="tw-text-center tw-relative"
-            >{{ sensor.AdadPokht }}
-            <div
-              [style.display]="sensor.$ShowAdadPokht ? 'none' :'block'"
-              style="
-                position: absolute;
-                left: -2px;
-                right: -2px;
-                top: 0;
-                bottom: 0;
-                background: black;
-                inset:0;
-              "
-            ></div>
-          </span>
-          }
-        </div>
-      </span>
-      }
-    </div>
-
-    }
-  </div>
-  <div class="klin-body">
-    <div
-      class="ghamir-container"
-      #ghamirTrack
-
-    >
-      @for(ghamir of ghamirs;track ghamir.Id){
-
-      <div
-        class="klin-ghamir-info"
-        [style.left.%]="ghamir.RelativeLeft * 100"
-        
-      >
-        <div class="valves-container disabled invisible"></div>
-        <div class="valves-container disabled invisible"></div>
-        <div class="valves-container disabled invisible"></div>
-        <div class="valves-container disabled invisible"></div>
-        <div class="valves-container disabled invisible"></div>
-        <div class="ghamir-wrapper">
-          <div class="ghamirnumber">
-            <span class="num">{{ ghamir.Number }}</span>
-            <span class="invisible">555</span>
-          </div>
-          <div class="ghamir" #ghamirRef>
-            <span class="nimehAjor disabled invisible tw-h-0">1/2</span>
-
-            <span
-              class="sizeAjor disabled invisible"              
-              >{{ '10سانتی' }}
-            </span>           
-            <span
-              class="sizeAjor"              
-              style="
-                overflow: hidden;
-                text-wrap: unset;
-                word-wrap: normal;
-                white-space: nowrap;
-              "
-              [attr.title]="ghamir.Mahsol?.$Caption || ''"
-              [ngClass]="{
-                'ajor-chideman': ghamir.GhamirStatusText === 'چیدمان',
-                'ajor-pokht':
-                  ghamir.GhamirStatusText !== 'چیدمان' && ghamir.HasMahsol
-              }"
-              [class.ajor-chideman]="ghamir.Chideman"
-              >{{ ghamir.Mahsol?.$Caption }} @if(!ghamir.Mahsol?.$Caption){
-              <span class="invisible">ندارد</span>
+          @if (vm.bricks.length) {
+            <g class="brick-stack">
+              @for (brick of vm.bricks; track $index) {
+                <rect
+                  [attr.x]="brick.x"
+                  [attr.y]="brick.y"
+                  [attr.width]="brick.width"
+                  [attr.height]="brick.height"
+                  rx="1"
+                  [attr.fill]="'url(#' + ids.brick + ')'"
+                />
               }
-            </span>
-          </div>
-        </div>
-      </div>
+            </g>
+          }
+
+          @if (detailLevel() > 0) {
+            <text
+              class="ghamir__number"
+              [attr.x]="vm.centerX"
+              y="116"
+              text-anchor="middle"
+            >{{ vm.data.Number }}</text>
+          }
+
+          @if (detailLevel() === 2 && vm.hasProduct) {
+            <text
+              class="ghamir__product"
+              [attr.x]="vm.centerX"
+              y="179"
+              text-anchor="middle"
+            >{{ vm.data.Mahsol.$Caption }}</text>
+          }
+        </g>
       }
-    </div>
+    </g>
+
+    <g class="sensor-layer">
+      @for (vm of sensorVMs(); track vm.data.Id) {
+        <g
+          class="sensor-node"
+          [class.sensor-node--error]="sensorHasError(vm.data)"
+          [class.sensor-node--virtual]="vm.data.IsMajazi"
+        >
+          @if (detailLevel() > 0) {
+            <text
+              class="sensor-node__number"
+              [attr.x]="vm.x"
+              y="23"
+              text-anchor="middle"
+            >{{ vm.data.SlaveAddress }}</text>
+          } @else {
+            <circle
+              class="sensor-node__overview-dot"
+              [attr.cx]="vm.x"
+              cy="19"
+              r="2.4"
+            />
+          }
+
+          @if (hasValve(vm.data)) {
+            <g class="svg-valve" [ngClass]="valveClass(vm.data)">
+              <rect [attr.x]="vm.x - 8" y="39" width="16" height="16" rx="3" />
+              @if (detailLevel() > 0) {
+                <text [attr.x]="vm.x" y="50.5" text-anchor="middle">
+                  {{ vm.data.ShirNode }}
+                </text>
+              }
+            </g>
+          }
+
+          <g
+            class="sensor-temperature"
+            [class.sensor-temperature--active]="vm.active"
+            [class.sensor-temperature--error]="sensorHasError(vm.data)"
+            role="button"
+            [attr.tabindex]="detailLevel() > 0 ? 0 : -1"
+            [attr.aria-expanded]="isCookValueVisible(vm.data)"
+            [attr.aria-label]="
+              'دمای ترنسمیتر ' +
+              vm.data.SlaveAddress +
+              ': ' +
+              signedValue(vm.data.Value)
+            "
+            (click)="onTemperatureClick($event, vm.data)"
+            (keydown)="onTemperatureKeydown($event, vm.data)"
+          >
+            <title>
+              ترنسمیتر {{ vm.data.SlaveAddress }}، دما
+              {{ signedValue(vm.data.Value) }}، عدد پخت {{ vm.data.AdadPokht }}
+            </title>
+            <rect
+              [attr.x]="vm.x - (detailLevel() > 0 ? 14 : 4)"
+              [attr.y]="vm.temperatureY"
+              [attr.width]="detailLevel() > 0 ? 28 : 8"
+              [attr.height]="detailLevel() > 0 ? 17 : 8"
+              [attr.rx]="detailLevel() > 0 ? 2 : 4"
+              class="sensor-temperature__box"
+            />
+
+            @if (detailLevel() > 0) {
+              <text
+                class="sensor-temperature__value"
+                [attr.x]="vm.x"
+                [attr.y]="vm.temperatureY + 12"
+                text-anchor="middle"
+              >{{ signedValue(vm.data.Value) }}</text>
+
+              @if (
+                isCookValueVisible(vm.data) &&
+                vm.data.AdadPokht !== null &&
+                vm.data.AdadPokht !== undefined &&
+                vm.data.AdadPokht !== ''
+              ) {
+                <g class="cook-value">
+                  <rect
+                    [attr.x]="vm.x - 12"
+                    [attr.y]="vm.temperatureY + 19"
+                    width="24"
+                    height="14"
+                    rx="2"
+                  />
+                  <text
+                    [attr.x]="vm.x"
+                    [attr.y]="vm.temperatureY + 29"
+                    text-anchor="middle"
+                  >{{ vm.data.AdadPokht }}</text>
+                </g>
+              }
+            }
+          </g>
+        </g>
+      }
+    </g>
+  </svg>
+
+  <div class="kiln-stage__rokh-label" aria-hidden="true">
+    <span>کوره</span>
+    <strong>رخ {{ rokhNumber }}</strong>
   </div>
-  <div class="tw-w-full !tw-bg-black tw-flex tw-flex-col">
-    <span class="sensor-dama ng-star-inserted">
-      <div
-        class="invisible"
-        style="
-          font-size: var(--klink-sensor-dama-div-fontsize);
-          text-align: center;
-          display: flex;
-          flex-direction: column;
-        "
-      >
-        <span class="tw-text-center">555</span>
-        
-      </div>
-    </span>
-    <span class="sensor-dama ng-star-inserted">
-      <div
-        class="invisible"
-        style="
-          font-size: var(--klink-sensor-dama-div-fontsize);
-          text-align: center;
-          display: flex;
-          flex-direction: column;
-        "
-      >
-        <span class="tw-text-center">555</span>
-        
-      </div>
-    </span>
+
+  <div class="kiln-stage__controls" aria-label="کنترل بزرگ‌نمایی">
+    <button type="button" (click)="zoomBy(0.78)" title="بزرگ‌نمایی" aria-label="بزرگ‌نمایی">
+      +
+    </button>
+    <button type="button" (click)="zoomBy(1.28)" title="کوچک‌نمایی" aria-label="کوچک‌نمایی">
+      −
+    </button>
+    <button type="button" (click)="fitToView()" title="نمایش کامل" aria-label="نمایش کامل">
+      ⤢
+    </button>
+    <output>{{ zoomPercent() }}٪</output>
   </div>
-</div>
+
+  @if (detailLevel() === 0) {
+    <div class="kiln-stage__zoom-hint">برای دیدن جزئیات زوم کنید</div>
+  }
+</section>
