@@ -1,0 +1,132 @@
+:host {
+  display: block;
+  width: 100%;
+  direction: rtl;
+  font-family: Tahoma, 'Segoe UI', Arial, sans-serif;
+}
+
+.kiln-scene {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid #14202b;
+  border-radius: 10px;
+  background:
+    radial-gradient(120% 90% at 50% 0%, rgb(35 52 68 / 45%), transparent 60%),
+    #070b10;
+
+  &--zoomed .kiln-scene__svg {
+    cursor: grab;
+  }
+
+  &__svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    touch-action: none;
+    user-select: none;
+
+    // host is RTL — keep SVG numeric text LTR so anchors don't flip
+    text {
+      direction: ltr;
+      unicode-bidi: isolate;
+    }
+  }
+
+  &__zoom {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    display: flex;
+    gap: 6px;
+
+    button {
+      width: 32px;
+      height: 32px;
+      border: 1px solid #2c3742;
+      border-radius: 8px;
+      color: #dbe6f0;
+      background: rgb(13 19 27 / 92%);
+      font-size: 1.05rem;
+      line-height: 1;
+      cursor: pointer;
+
+      &:hover { background: rgb(30 42 54 / 95%); }
+      &.reset { color: #f2bb05; }
+    }
+  }
+}
+
+/* chambers */
+.chamber {
+  cursor: pointer;
+  &:hover .chamber__number { fill: #fff; }
+}
+.chamber__number {
+  fill: #e7eef5;
+  font-size: 18px;
+  font-weight: 700;
+}
+.chamber__alarm { animation: ks-alarm 1.1s ease-in-out infinite; }
+
+.chamber__product {
+  fill: #d7e6f2;
+  font-size: 13px;
+  font-weight: 700;
+  // outline so the label stays readable over the glow at any zoom
+  stroke: #05070a;
+  stroke-width: 3px;
+  paint-order: stroke;
+}
+.chamber__product--empty {
+  fill: #5c6b78;
+  font-weight: 400;
+}
+
+/* valves */
+.valve__num {
+  fill: #f4f8fc;
+  font-size: 13px;
+  font-weight: 700;
+}
+.valve__open {
+  fill: #ffd08a;
+  font-size: 11px;
+  font-weight: 700;
+}
+.valve__flame {
+  transform-box: fill-box;
+  transform-origin: top center;
+  animation: ks-flicker 0.55s ease-in-out infinite alternate;
+}
+
+/* real node cards */
+.node { cursor: default; pointer-events: all; }
+.card__id { fill: #eaf1f8; font-size: 17px; font-weight: 700; }
+.card__id--cook { fill: #f2bb05; }
+.card__id--clickable { cursor: pointer; }
+.card__idlabel { fill: #7a8794; font-size: 9px; }
+.card__label { fill: #8b98a6; font-size: 10px; }
+.card__temp { font-size: 15px; font-weight: 700; }
+
+/* virtual nodes — dim / lightweight */
+.vnode { cursor: pointer; opacity: 0.72; }
+.vnode__temp { font-size: 13px; font-weight: 700; }
+.vnode__tag { fill: #62707c; font-size: 8px; }
+
+/* overview (fit) labels */
+.ov-num { fill: #eef4fb; font-size: 34px; font-weight: 700; }
+.ov-num--cook { fill: #f2bb05; }
+.ov-num--clickable { cursor: pointer; }
+.ov-temp { font-size: 30px; font-weight: 700; }
+.ov-virt { font-size: 22px; font-weight: 700; opacity: 0.6; }
+
+@keyframes ks-alarm {
+  0%, 100% { stroke-opacity: 0.25; }
+  50% { stroke-opacity: 1; }
+}
+
+@keyframes ks-flicker {
+  from { transform: scaleY(0.82) scaleX(1.04); opacity: 0.8; }
+  to   { transform: scaleY(1.12) scaleX(0.92); opacity: 1; }
+}

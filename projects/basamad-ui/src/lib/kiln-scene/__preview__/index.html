@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>Kiln Scene Preview — real data</title>
+<style>
+  html,body { margin:0; height:100%; background:#04060a; font-family:Tahoma,Arial,sans-serif; }
+  body { padding:16px; box-sizing:border-box; }
+  .dash { border:1px solid #1c2732; border-radius:14px; overflow:hidden; background:#070b10; box-shadow:0 10px 30px rgb(0 0 0 / 45%); }
+  .topbar { display:flex; flex-wrap:wrap; align-items:center; gap:10px 14px; padding:12px 16px; border-bottom:1px solid #1c2732; background:linear-gradient(180deg,#0d141d,#0a0f16); }
+  .topbar .brand strong{ color:#f4f8fc; font-size:1.05rem; }
+  .topbar .brand span{ color:#93a2b1; font-size:.75rem; margin-inline-start:8px; }
+  .topbar .spacer{ flex:1; }
+  .legend { display:flex; align-items:center; gap:10px; padding:6px 12px; border:1px solid #232e39; border-radius:10px; background:#0b1119; flex-wrap:wrap; }
+  .legend b{ color:#dfe8f0; font-size:.72rem; }
+  .legend .row{ display:flex; align-items:center; gap:5px; color:#b9c6d2; font-size:.68rem; }
+  .legend i{ width:10px; height:10px; border-radius:50%; box-shadow:0 0 6px currentColor; }
+  .legend .virt{ width:12px;height:12px;border-radius:3px;border:1px dashed #64707c;box-shadow:none; }
+  .legend .sq{ width:11px;height:11px;border-radius:2px;box-shadow:none; }
+  .guide{ color:#5f6d7b; font-size:.68rem; }
+  .zoom { display:flex; gap:6px; }
+  .zoom button{ width:34px;height:34px;border:1px solid #2c3742;border-radius:9px;color:#dbe6f0;background:#0d131b;font-size:1.1rem;line-height:1;cursor:pointer; }
+  .zoom button.reset{ color:#f2bb05; }
+  .rokh { padding:10px 12px; }
+  .rokh + .rokh{ border-top:1px solid #141c26; }
+  .rokh__cap{ display:flex; align-items:center; gap:8px; margin:0 2px 6px; color:#9fb0bf; font-size:.78rem; }
+  .rokh__cap b{ color:#e7eef5; }
+  .scene { position:relative; width:100%; overflow:hidden; border:1px solid #14202b; border-radius:10px;
+    background:radial-gradient(120% 90% at 50% 0%, rgb(35 52 68 / 45%), transparent 60%), #070b10; }
+  .scene--zoomed svg{ cursor:grab; }
+  .scene svg { display:block; width:100%; height:auto; touch-action:none; user-select:none; }
+  .scene svg text { direction:ltr; unicode-bidi:isolate; }
+  .chamber__number { fill:#e7eef5; font-size:18px; font-weight:700; }
+  .chamber__product { fill:#d7e6f2; font-size:13px; font-weight:700; stroke:#05070a; stroke-width:3px; paint-order:stroke; }
+  .chamber__product.empty { fill:#5c6b78; font-weight:400; }
+  .valve__num { fill:#f4f8fc; font-size:13px; font-weight:700; }
+  .valve__open { fill:#ffd08a; font-size:11px; font-weight:700; }
+  .valve__flame { transform-box:fill-box; transform-origin:top center; animation:flick .55s ease-in-out infinite alternate; }
+  @keyframes flick { from{transform:scaleY(.82) scaleX(1.04);opacity:.8} to{transform:scaleY(1.12) scaleX(.92);opacity:1} }
+  .card__id { fill:#eaf1f8; font-size:17px; font-weight:700; }
+  .card__idlabel { fill:#7a8794; font-size:9px; }
+  .card__label { fill:#8b98a6; font-size:10px; }
+  .card__temp { font-size:15px; font-weight:700; }
+  .vnode__temp { font-size:13px; font-weight:700; }
+  .vnode__tag { fill:#62707c; font-size:8px; }
+  .ov-num { fill:#eef4fb; font-size:34px; font-weight:700; }
+  .ov-temp { font-size:30px; font-weight:700; }
+  .ov-virt { font-size:22px; font-weight:700; opacity:.6; }
+  .numtoggle.cook { fill:#f2bb05; }
+  .numtoggle[data-cookable="1"] { cursor:pointer; }
+  .g-ov,.g-card{ display:none; }
+  [data-detail="card"] .g-card{ display:block; }
+  [data-detail="ov"] .g-ov{ display:block; }
+  [data-detail="ov"] .vzoom{ display:none; }
+  .msg{color:#7f8b98;padding:20px;font-size:.85rem;}
+</style>
+</head>
+<body>
+<div class="dash">
+  <div class="topbar">
+    <div class="brand"><strong id="title">…</strong><span id="subtitle"></span></div>
+    <div class="spacer"></div>
+    <div class="legend"><b>زون:</b>
+      <span class="row"><i style="background:#ff3b30;color:#ff3b30"></i>پخت</span>
+      <span class="row"><i style="background:#ff9f0a;color:#ff9f0a"></i>پیش‌گرم</span>
+      <span class="row"><i style="background:#0a84ff;color:#0a84ff"></i>کولینگ</span>
+      <span class="row"><i class="virt"></i>مجازی</span>
+    </div>
+    <div class="legend"><b>شیر:</b>
+      <span class="row"><i class="sq" style="background:#f2c400"></i>۵۰</span>
+      <span class="row"><i class="sq" style="background:#ff3b30"></i>۱۰۰</span>
+      <span class="row"><i class="sq" style="background:#34c759"></i>۱۵۰</span>
+      <span class="row"><i class="sq" style="background:#0c0c0e;border:1px solid #333"></i>۲۰۰</span>
+      <span class="row">دسته: سبز=اتومات/قرمز=دستی</span>
+    </div>
+    <div class="guide">زوم: اسکرول/pinch · کلیک روی شماره‌نود = عدد پخت</div>
+    <div class="zoom"><button id="zin">+</button><button id="zout">−</button><button id="zres" class="reset">⟲</button></div>
+  </div>
+  <div id="rokhs"><div class="msg">در حال بارگذاری دیتای واقعی…</div></div>
+</div>
+
+<script>
+const STAGE={firing:'#ff3b30',preheat:'#ff9f0a',cooling:'#0a84ff'};
+const stageFor=t=> t>=800?'firing': t>=400?'preheat':'cooling';
+const num=v=>{const n=Number(v);return Number.isFinite(n)?n:0;};
+const boolv=v=>v===true||v==='true'||v==='True';
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const valveStateColor=s=>({50:'#f2c400',100:'#ff3b30',150:'#34c759',200:'#0c0c0e'}[s]||'#8a95a1');
+const flamePath=(cx,top,h)=>{const w=h*0.5;return `M ${cx} ${top+h} C ${cx-w} ${top+h*0.5} ${cx-w} ${top} ${cx} ${top} C ${cx+w} ${top} ${cx+w} ${top+h*0.5} ${cx} ${top+h} Z`;};
+
+function mapKoreh(mo){
+  const T=mo?.Transmitters?.MoDataList??[], G=mo?.Ghamirs?.MoDataList??[];
+  const nodes=T.map(t=>{
+    const temperature=num(t.Value),valve=num(t.ShirNode),batt=num(t.BatteryValue);
+    const hasValve=valve>0&&valve<100;
+    const manual=String(t.HalatShir)==='3'||String(t['HalatShir$Caption']||'').includes('دستی');
+    const stage=stageFor(temperature);
+    // NOTE: real data has RangShir=0 & ShirPosition=0 → inject demo values so the
+    // color-state / open-amount / flame features are visible in this preview.
+    const stateReal=num(t.RangShir), openReal=num(t.ShirPosition);
+    return{ number:String(t.SlaveAddress??''),temperature,cookNumber:num(t.AdadPokht),isVirtual:boolv(t.IsMajazi),
+      valve, valveMode:hasValve?(manual?'manual':'auto'):null, hasCook:stage!=='cooling',
+      valveState: hasValve?(stateReal||[50,100,150,200][valve%4]):0,
+      valveOpen: hasValve?(openReal||(25+(valve*13)%70)):0,
+      batteryLevel:batt>0?batt:null, failed:boolv(t.TransmitterFailed)||boolv(t.TermokoplFailed),
+      alarm:boolv(t.Error)||temperature>=1000, stage, ghamirId:t.Ghamir?.Id??null, rokh:num(t.RokhNumber)};});
+  const byG=new Map();
+  nodes.forEach(n=>{if(!n.ghamirId)return;if(!byG.has(n.ghamirId))byG.set(n.ghamirId,[]);byG.get(n.ghamirId).push(n);});
+  const chambers=G.map(g=>{const bound=byG.get(g.Id)||[];const reals=bound.filter(n=>!n.isVirtual);const pool=reals.length?reals:bound;
+    const temperature=pool.length?Math.round(pool.reduce((s,n)=>s+n.temperature,0)/pool.length):0;const status=String(g.GhamirStatusText??'');
+    const product=String(g.Mahsol?.$Caption??'');
+    return{number:String(g.Number??''),product,status,isEmpty:boolv(g.IsEmpty)||status==='خالی'||!product,
+      temperature,stage:stageFor(temperature),alarm:pool.some(n=>n.alarm),rokh:num(g.RokhNumber)};});
+  const rokhNums=[...new Set([...nodes.map(n=>n.rokh),...chambers.map(c=>c.rokh)])].filter(r=>r>0).sort((a,b)=>a-b);
+  // StartOfFirstNodePosition: 2/4 = راست → reverse so #1 lands on the right
+  const startPosition=String(mo?.StartOfFirstNodePosition??'1');
+  const rightStart = startPosition==='2'||startPosition==='4';
+  return{ title:String(mo?.F13??'کوره'), startPosition,
+    rokhs:rokhNums.map(rk=>{
+      const nds=nodes.filter(n=>n.rokh===rk).sort((a,b)=>num(a.number)-num(b.number));
+      const chs=chambers.filter(c=>c.rokh===rk).sort((a,b)=>num(a.number)-num(b.number));
+      if(rightStart){nds.reverse();chs.reverse();}
+      return {rokhNumber:rk,nodes:nds,chambers:chs};
+    }) };
+}
+
+const PAD=40, NODE_PITCH=72, REAL_CARD_W=108, CARD_H=100, VIRT_W=44, NCARD_TOP=16, PIPE_Y=228, WALL_TOP=262, CH_GAP=16;
+
+function buildSVG(p, nodes, chambers){
+  const nN=nodes.length, nC=Math.max(1,chambers.length);
+  const CANVAS_W=Math.max(600, PAD*2+nN*NODE_PITCH);
+  const chPitch=(CANVAS_W-PAD*2)/nC, archW=chPitch-CH_GAP, radius=archW/2, straightH=archW*0.28;
+  const CH_BOTTOM=WALL_TOP+34+straightH+radius, SPRING=CH_BOTTOM-straightH, CANVAS_H=Math.round(CH_BOTTOM+22);
+  let defs='',arches='',valves='',gCard='',gOv='';
+
+  chambers.forEach((c,j)=>{
+    const cx=PAD+j*chPitch+chPitch/2, ax=cx-archW/2, ax2=cx+archW/2;
+    const path=`M ${ax} ${CH_BOTTOM} L ${ax} ${SPRING} A ${radius} ${radius} 0 0 1 ${ax2} ${SPRING} L ${ax2} ${CH_BOTTOM} Z`;
+    const col=STAGE[c.stage];
+    defs+=`<radialGradient id="${p}c${j}" gradientUnits="userSpaceOnUse" cx="${cx}" cy="${CH_BOTTOM-26}" r="${archW*0.62}">
+      <stop offset="0%" stop-color="${col}" stop-opacity="1"/><stop offset="42%" stop-color="${col}" stop-opacity="0.7"/><stop offset="100%" stop-color="#05070a" stop-opacity="0.92"/></radialGradient>`;
+    let bricks='';
+    if(!c.isEmpty){
+      const loadH=archW*0.5,loadW=archW-22,loadLeft=ax+11,loadTop=CH_BOTTOM-loadH-6,gp=3,bw=(loadW-gp*3)/4,bh=(loadH-gp*2)/3;
+      for(let r=0;r<3;r++)for(let cc=0;cc<4;cc++){let off=r%2?bw/2:0;let x=loadLeft+cc*(bw+gp)+off;if(x+bw>loadLeft+loadW)x=loadLeft+loadW-bw;
+        bricks+=`<rect x="${x}" y="${loadTop+r*(bh+gp)}" width="${bw}" height="${bh}" rx="2" fill="${col}" fill-opacity="0.5" stroke="#000" stroke-opacity="0.35"/>`;}
+    }
+    arches+=`<g><path d="${path}" fill="#07080b"/><path d="${path}" fill="url(#${p}c${j})" filter="url(#${p}bloom)"/>${bricks}
+      <path d="${path}" fill="none" stroke="#727c86" stroke-width="3" stroke-opacity="0.85"/>
+      ${c.alarm?`<path d="${path}" fill="none" stroke="#ff453a" stroke-width="4"/>`:''}
+      <rect x="${cx-27}" y="${WALL_TOP+2}" width="54" height="24" rx="5" fill="#0e1319" stroke="#39424c"/>
+      <text class="chamber__number" x="${cx}" y="${WALL_TOP+19}" text-anchor="middle">${c.number}</text>
+      <text class="chamber__product${c.isEmpty?' empty':''}" x="${cx}" y="${CH_BOTTOM-12}" text-anchor="middle">${esc(c.isEmpty?'خالی':c.product)}</text></g>`;
+  });
+
+  nodes.forEach((d,i)=>{
+    const cx=PAD+i*NODE_PITCH+NODE_PITCH/2, col=STAGE[d.stage];
+    if(d.valveMode){
+      const handle=d.valveMode==='manual'?'#ff3b30':'#34c759', sc=valveStateColor(d.valveState), fH=4+(d.valveOpen/100)*20;
+      valves+=`<g>
+        ${d.valveOpen>0?`<path class="valve__flame vzoom" d="${flamePath(cx,PIPE_Y+9,fH)}" fill="url(#${p}flame)"/>`:''}
+        <rect x="${cx-9}" y="${PIPE_Y-10}" width="18" height="20" rx="3" fill="${sc}" stroke="#0a0f14"/>
+        <line x1="${cx}" y1="${PIPE_Y-10}" x2="${cx}" y2="${PIPE_Y-20}" stroke="${handle}" stroke-width="2"/>
+        <line x1="${cx-7}" y1="${PIPE_Y-21}" x2="${cx+7}" y2="${PIPE_Y-21}" stroke="${handle}" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="${cx}" y1="${PIPE_Y-21}" x2="${cx}" y2="${PIPE_Y-28}" stroke="#5a6672" stroke-width="1.4"/>
+        <rect x="${cx-13}" y="${PIPE_Y-47}" width="26" height="19" rx="5" fill="#0e1319" stroke="${sc}" stroke-width="1.6"/>
+        <text class="valve__num" x="${cx}" y="${PIPE_Y-33}" text-anchor="middle">${d.valve}</text>
+        <text class="valve__open vzoom" x="${cx}" y="${WALL_TOP+15}" text-anchor="middle">${Math.round(d.valveOpen)}</text></g>`;
+    }
+    if(d.isVirtual){
+      const chipX=cx-VIRT_W/2, chipY=NCARD_TOP+20;
+      gCard+=`<g opacity="0.72"><rect x="${chipX}" y="${chipY}" width="${VIRT_W}" height="42" rx="9" fill="#0b0f15" fill-opacity="0.8" stroke="#2a333d" stroke-dasharray="3 3"/>
+        <text class="vnode__temp" x="${cx}" y="${chipY+20}" text-anchor="middle" fill="${col}">${Math.round(d.temperature)}°</text>
+        <text class="vnode__tag" x="${cx}" y="${chipY+34}" text-anchor="middle">مجازی</text></g>`;
+      gOv+=`<text class="ov-virt" x="${cx}" y="${NCARD_TOP+94}" text-anchor="middle" fill="${col}">${Math.round(d.temperature)}°</text>`;
+    } else {
+      const cX=cx-REAL_CARD_W/2, cardY=NCARD_TOP, ck=d.hasCook?1:0, cook=Math.trunc(d.cookNumber);
+      const strip=`M ${cX+11} ${cardY} H ${cX+REAL_CARD_W-11} a 11 11 0 0 1 11 11 V ${cardY+4} H ${cX} V ${cardY+11} a 11 11 0 0 1 11 -11 Z`;
+      const battShow=d.batteryLevel!=null, battW=16*((d.batteryLevel||0)/100), battFill=(d.batteryLevel||0)<25?'#ff453a':'#34c759';
+      gCard+=`<g class="node">
+        <line x1="${cx}" y1="${cardY+CARD_H}" x2="${cx}" y2="${PIPE_Y}" stroke="#63707c" stroke-width="1.5"/><circle cx="${cx}" cy="${cardY+CARD_H}" r="3" fill="#aeb9c2"/>
+        <rect x="${cX}" y="${cardY}" width="${REAL_CARD_W}" height="${CARD_H}" rx="11" fill="#0d131b" fill-opacity="0.96" stroke="#2b333d" stroke-width="1.5"/>
+        <path d="${strip}" fill="${col}"/>
+        <text class="card__id numtoggle" data-i="${i}" data-num="${d.number}" data-cook="${cook}" data-cookable="${ck}" x="${cX+REAL_CARD_W-10}" y="${cardY+30}" text-anchor="end">${d.number}</text>
+        <text class="card__idlabel" data-i="${i}" x="${cX+REAL_CARD_W-10}" y="${cardY+45}" text-anchor="end">${d.hasCook?'نود ⇄ پخت':'شماره نود'}</text>
+        ${battShow?`<rect x="${cX+9}" y="${cardY+15}" width="20" height="11" rx="2" fill="none" stroke="#7d8894" stroke-width="1.3"/><rect x="${cX+29}" y="${cardY+18}" width="2.4" height="5" fill="#7d8894"/><rect x="${cX+11}" y="${cardY+17}" width="${battW}" height="7" rx="1" fill="${battFill}"/>`:''}
+        ${d.failed?`<circle cx="${cX+16}" cy="${cardY+35}" r="4" fill="#ff9f0a"/>`:''}
+        <line x1="${cX+10}" y1="${cardY+58}" x2="${cX+REAL_CARD_W-10}" y2="${cardY+58}" stroke="#222a33"/>
+        <text class="card__label" x="${cX+REAL_CARD_W-10}" y="${cardY+82}" text-anchor="end">دما</text>
+        <text class="card__temp" x="${cX+10}" y="${cardY+83}" text-anchor="start" fill="${col}">${Math.round(d.temperature)}°</text></g>`;
+      gOv+=`<text class="ov-num numtoggle" data-i="${i}" data-num="${d.number}" data-cook="${cook}" data-cookable="${ck}" x="${cx}" y="${NCARD_TOP+40}" text-anchor="middle">${d.number}</text>
+        <text class="ov-temp" x="${cx}" y="${NCARD_TOP+82}" text-anchor="middle" fill="${col}">${Math.round(d.temperature)}°</text>`;
+    }
+  });
+
+  return `<svg viewBox="0 0 ${CANVAS_W} ${CANVAS_H}" preserveAspectRatio="xMidYMid meet" data-cw="${CANVAS_W}" data-ch="${CANVAS_H}">
+<defs><filter id="${p}bloom" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="8"/></filter>
+<linearGradient id="${p}hall" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#131a24"/><stop offset="100%" stop-color="#0a0f16"/></linearGradient>
+<linearGradient id="${p}wall" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#3a2b22"/><stop offset="55%" stop-color="#2b2018"/><stop offset="100%" stop-color="#1c150f"/></linearGradient>
+<pattern id="${p}brick" width="34" height="18" patternUnits="userSpaceOnUse"><path d="M0 0H34M0 9H34M0 18H34M17 0V9M0 9V18M34 9V18" stroke="#000" stroke-opacity="0.18"/></pattern>
+<linearGradient id="${p}pipe" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#f6c445"/><stop offset="45%" stop-color="#d99a1c"/><stop offset="100%" stop-color="#8a5e12"/></linearGradient>
+<linearGradient id="${p}floor" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#12161c"/><stop offset="100%" stop-color="#05070a"/></linearGradient>
+<linearGradient id="${p}flame" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#ffe08a"/><stop offset="45%" stop-color="#ff9f0a"/><stop offset="100%" stop-color="#ff3b30"/></linearGradient>${defs}</defs>
+<rect x="0" y="0" width="${CANVAS_W}" height="${CANVAS_H}" fill="url(#${p}hall)"/>
+<rect x="0" y="${WALL_TOP}" width="${CANVAS_W}" height="${CH_BOTTOM-WALL_TOP}" fill="url(#${p}wall)"/>
+<rect x="0" y="${WALL_TOP}" width="${CANVAS_W}" height="${CH_BOTTOM-WALL_TOP}" fill="url(#${p}brick)"/>
+<rect x="0" y="${CH_BOTTOM}" width="${CANVAS_W}" height="${CANVAS_H-CH_BOTTOM}" fill="url(#${p}floor)"/>
+${arches}<rect x="20" y="${PIPE_Y-8}" width="${CANVAS_W-40}" height="16" rx="8" fill="url(#${p}pipe)" stroke="#5c3f0c"/>${valves}
+<g class="g-ov">${gOv}</g><g class="g-card">${gCard}</g></svg>`;
+}
+
+function makeScene(container){
+  const svg=container.querySelector('svg'); const CW=+svg.dataset.cw, CH=+svg.dataset.ch;
+  const CANVAS={x:0,y:0,w:CW,h:CH}; let vb={...CANVAS};
+  const clamp=(v,a,b)=>Math.min(b,Math.max(a,v)); const cw=()=>container.clientWidth||1200;
+  const cookState={};
+  function applyNode(i){const show=cookState[i];
+    svg.querySelectorAll('.numtoggle[data-i="'+i+'"]').forEach(el=>{el.textContent=show?el.dataset.cook:el.dataset.num;el.classList.toggle('cook',!!show);});
+    const lbl=svg.querySelector('.card__idlabel[data-i="'+i+'"]'); if(lbl)lbl.textContent=show?'عدد پخت':'نود ⇄ پخت';}
+  function updateDetail(){const px=cw()*(NODE_PITCH/vb.w);container.dataset.detail=px>=56?'card':'ov';container.classList.toggle('scene--zoomed',vb.w<CANVAS.w-0.5);}
+  function setVB(nv){const x=clamp(nv.x,0,Math.max(0,CANVAS.w-nv.w)),y=clamp(nv.y,0,Math.max(0,CANVAS.h-nv.h));vb={x,y,w:nv.w,h:nv.h};svg.setAttribute('viewBox',`${x} ${y} ${vb.w} ${vb.h}`);updateDetail();}
+  const toSvg=(cx,cy)=>{const r=svg.getBoundingClientRect();return{x:vb.x+((cx-r.left)/r.width)*vb.w,y:vb.y+((cy-r.top)/r.height)*vb.h};};
+  function zoomAt(f,fx,fy){const w=clamp(vb.w*f,CANVAS.w*0.12,CANVAS.w),h=w*(CANVAS.h/CANVAS.w);setVB({x:fx-((fx-vb.x)*w)/vb.w,y:fy-((fy-vb.y)*h)/vb.h,w,h});}
+  svg.addEventListener('wheel',e=>{e.preventDefault();const q=toSvg(e.clientX,e.clientY);zoomAt(e.deltaY<0?0.86:1/0.86,q.x,q.y);},{passive:false});
+  svg.addEventListener('dblclick',()=>setVB({...CANVAS}));
+  const pts=new Map();let panLast=null,pinch=null,downPos=null,moved=false;
+  svg.addEventListener('pointerdown',e=>{svg.setPointerCapture(e.pointerId);pts.set(e.pointerId,{x:e.clientX,y:e.clientY});downPos={x:e.clientX,y:e.clientY};moved=false;
+    if(pts.size===2){const a=[...pts.values()];const d=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y);const c=toSvg((a[0].x+a[1].x)/2,(a[0].y+a[1].y)/2);pinch={d,vb:{...vb},cx:c.x,cy:c.y};panLast=null;}else panLast={x:e.clientX,y:e.clientY};});
+  svg.addEventListener('pointermove',e=>{if(!pts.has(e.pointerId))return;pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    if(downPos&&Math.hypot(e.clientX-downPos.x,e.clientY-downPos.y)>6)moved=true;
+    if(pts.size>=2&&pinch){const a=[...pts.values()];const d=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y);const ratio=pinch.d/Math.max(1,d);const w=clamp(pinch.vb.w*ratio,CANVAS.w*0.12,CANVAS.w),h=w*(CANVAS.h/CANVAS.w);setVB({x:pinch.cx-((pinch.cx-pinch.vb.x)*w)/pinch.vb.w,y:pinch.cy-((pinch.cy-pinch.vb.y)*h)/pinch.vb.h,w,h});return;}
+    if(panLast&&vb.w<CANVAS.w-0.5){const r=svg.getBoundingClientRect();const dx=(e.clientX-panLast.x)*(vb.w/r.width),dy=(e.clientY-panLast.y)*(vb.h/r.height);panLast={x:e.clientX,y:e.clientY};setVB({...vb,x:vb.x-dx,y:vb.y-dy});}});
+  const up=e=>{pts.delete(e.pointerId);if(pts.size<2)pinch=null;if(pts.size===0)panLast=null;};
+  svg.addEventListener('pointerup',up);svg.addEventListener('pointercancel',up);
+  // toggle عدد پخت — click only on the node number (works both zoomed & overview)
+  svg.addEventListener('click',e=>{if(moved)return;const el=e.target.closest('.numtoggle[data-cookable="1"]');if(!el)return;const i=el.dataset.i;cookState[i]=cookState[i]?0:1;applyNode(i);});
+  window.addEventListener('resize',updateDetail);updateDetail();
+  return {zoomCenter:f=>zoomAt(f,vb.x+vb.w/2,vb.y+vb.h/2),reset:()=>setVB({...CANVAS})};
+}
+
+fetch('monitoring-koreh.json').then(r=>r.json()).then(mo=>{
+  const koreh=mapKoreh(mo);
+  document.getElementById('title').textContent = koreh.title || 'کوره';
+  const realN=koreh.rokhs[0]?.nodes.filter(n=>!n.isVirtual).length||0, virtN=koreh.rokhs[0]?.nodes.filter(n=>n.isVirtual).length||0;
+  document.getElementById('subtitle').textContent = `دیتای واقعی — ${realN} حقیقی + ${virtN} مجازی (مقادیر شیر دمو)`;
+  const host=document.getElementById('rokhs'); host.innerHTML=''; const scenes=[];
+  koreh.rokhs.forEach((rk,idx)=>{
+    const row=document.createElement('div'); row.className='rokh';
+    row.innerHTML=`<div class="rokh__cap"><b>رخ ${rk.rokhNumber}</b><span>— ${rk.chambers.length} قمیر / ${rk.nodes.length} نود</span></div><div class="scene"></div>`;
+    host.appendChild(row);
+    const sc=row.querySelector('.scene'); sc.innerHTML=buildSVG('r'+idx, rk.nodes, rk.chambers);
+    scenes.push(makeScene(sc));
+  });
+  document.getElementById('zin').onclick=()=>scenes.forEach(s=>s.zoomCenter(0.8));
+  document.getElementById('zout').onclick=()=>scenes.forEach(s=>s.zoomCenter(1.25));
+  document.getElementById('zres').onclick=()=>scenes.forEach(s=>s.reset());
+}).catch(e=>{document.getElementById('rokhs').innerHTML='<div class="msg">خطا در بارگذاری دیتا: '+e+'</div>';});
+</script>
+</body>
+</html>

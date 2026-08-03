@@ -1,0 +1,18 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "kiln-scene-preview",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "-y",
+        "http-server",
+        "projects/basamad-ui/src/lib/kiln-scene/__preview__",
+        "-p",
+        "4203",
+        "-c-1"
+      ],
+      "port": 4203
+    }
+  ]
+}
