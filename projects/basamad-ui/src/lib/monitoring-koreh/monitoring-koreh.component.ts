@@ -43,14 +43,6 @@ export class MonitoringKorehComponent
   x: WritableSignal<any> = signal(null);
   ngOnInit(): void {
     super.ngOnInit();
-
-    interval(60000)
-      .pipe(takeUntil(this._onDestroy$))
-      .subscribe(() => {
-        this.FormPanelCtrlr.Reload(() => {
-          // debugger;
-        });
-      });
     setTimeout(() => {
       const elem = this._el.nativeElement;
       const option = {
