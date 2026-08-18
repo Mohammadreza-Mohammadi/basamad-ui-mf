@@ -53,16 +53,8 @@
 
 <div class="content">
   <div #divRef2 style="display: flex; flex-direction: column; gap: 0.5rem">
-    <bu-pokhtban-klin-online-monitoring
-      [title]="mo.$Caption"
-      [transmitters]="mo.Transmitters.MoDataList"
-      [ghamirs]="mo.Ghamirs.MoDataList"
-      [startOfFirstNodePosition]="mo.StartOfFirstNodePosition"
-      [deviceSize]="deviceSize"
-      [mobile]="isMobile"
-      (zoom)="onZoom()"
-    >
-    </bu-pokhtban-klin-online-monitoring>
+    <!-- reactive dashboard: reacts to in-place `mo` mutations via ngDoCheck -->
+    <bu-kiln-dashboard [mo]="mo"></bu-kiln-dashboard>
 
     <!-- <app-monitoring-koreh-item
               *ngIf="!schemaMode"

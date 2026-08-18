@@ -1,0 +1,23 @@
+@if (koreh(); as k) {
+  <div class="kiln-dash">
+    <div class="kiln-dash__top">
+      <div class="kiln-dash__title">{{ k.title }}</div>
+      <div class="kiln-dash__legend">
+        <span class="kiln-dash__legend-title">وضعیت پخت:</span>
+        @for (item of legend; track item.key) {
+          <span class="kiln-dash__lg"><i [style.background]="item.color"></i>{{ item.label }}</span>
+        }
+      </div>
+    </div>
+
+    @for (rokh of k.rokhs; track rokh.rokhNumber) {
+      <div class="kiln-dash__rokh">
+        <div class="kiln-dash__rokhcap">
+          <b>رخ {{ rokh.rokhNumber }}</b>
+          <span>— {{ rokh.chambers.length }} قمیر / {{ rokh.nodes.length }} نود</span>
+        </div>
+        <bu-kiln-scene [nodes]="rokh.nodes" [chambers]="rokh.chambers"></bu-kiln-scene>
+      </div>
+    }
+  </div>
+}

@@ -182,9 +182,15 @@ export class KilnSceneComponent implements OnInit, OnChanges, OnDestroy {
     const canvasH = Math.round(chBottom + 22);
 
     this.chBottom.set(chBottom);
+    const prev = this.canvas();
     const canvas: ViewBox = { x: 0, y: 0, w: canvasW, h: canvasH };
     this.canvas.set(canvas);
-    this.viewBox.set({ ...canvas });
+    // On live data updates the layout size is unchanged — keep the current
+    // zoom/pan instead of snapping back to the full view. Only reset when the
+    // structure (node/chamber counts) actually changed.
+    if (prev.w !== canvas.w || prev.h !== canvas.h) {
+      this.viewBox.set({ ...canvas });
+    }
 
     // chambers
     const chVMs: ChamberVM[] = chambers.map((c, j) => {

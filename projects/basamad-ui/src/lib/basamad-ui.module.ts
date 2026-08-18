@@ -42,6 +42,10 @@ import { FormModule } from '@fundamental-ngx/core/form';
 import { FormsModule } from '@fundamental-ngx/cdk/forms';
 import { RouterModule } from '@angular/router';
 
+// standalone components
+import { KilnSceneComponent } from './kiln-scene/kiln-scene.component';
+import { KilnDashboardComponent } from './kiln-scene/kiln-dashboard.component';
+
 
 const components = [
   MonitoringKorehComponent,
@@ -74,6 +78,9 @@ const pipes = [
     FundamentalNgxCoreModule,
     FormModule,
     FormsModule,
+    // standalone kiln components (usable in this module's templates)
+    KilnSceneComponent,
+    KilnDashboardComponent,
   ],
   exports: [...components, ...pipes],
   providers: [...pipes, BasamadService, OrientationService],
