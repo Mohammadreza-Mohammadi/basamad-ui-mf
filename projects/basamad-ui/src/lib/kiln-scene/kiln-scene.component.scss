@@ -84,15 +84,31 @@
 }
 
 /* valves */
+.valve__body,
+.valve__badge,
+.valve__open-badge {
+  filter: drop-shadow(0 2px 3px rgb(0 0 0 / 70%));
+}
 .valve__num {
   fill: #f4f8fc;
-  font-size: 13px;
-  font-weight: 700;
+  font-size: 18px;
+  font-weight: 800;
+  stroke: #05070a;
+  stroke-width: 2px;
+  paint-order: stroke;
+}
+.valve__open-badge {
+  fill: #111820;
+  stroke: #ffd08a;
+  stroke-width: 2px;
 }
 .valve__open {
-  fill: #ffd08a;
-  font-size: 11px;
-  font-weight: 700;
+  fill: #ffe1a8;
+  font-size: 17px;
+  font-weight: 800;
+  stroke: #05070a;
+  stroke-width: 2px;
+  paint-order: stroke;
 }
 .valve__flame {
   transform-box: fill-box;
@@ -103,9 +119,10 @@
 /* real node cards */
 .node { cursor: default; pointer-events: all; }
 .card__id { fill: #eaf1f8; font-size: 17px; font-weight: 700; }
-.card__id--cook { fill: #f2bb05; }
 .card__id--clickable { cursor: pointer; }
 .card__idlabel { fill: #7a8794; font-size: 9px; }
+.card__cook { fill: #f2bb05; font-size: 16px; font-weight: 800; }
+.card__cook-label { fill: #c9a928; font-size: 10px; }
 .card__label { fill: #8b98a6; font-size: 10px; }
 .card__temp { font-size: 15px; font-weight: 700; }
 
@@ -116,9 +133,10 @@
 
 /* overview (fit) labels */
 .ov-num { fill: #eef4fb; font-size: 34px; font-weight: 700; }
-.ov-num--cook { fill: #f2bb05; }
 .ov-num--clickable { cursor: pointer; }
 .ov-temp { font-size: 30px; font-weight: 700; }
+.ov-cook { fill: #f2bb05; font-size: 25px; font-weight: 800; }
+.ov-cook-label { fill: #c9a928; font-size: 11px; font-weight: 700; }
 .ov-virt { font-size: 22px; font-weight: 700; opacity: 0.6; }
 
 @keyframes ks-alarm {

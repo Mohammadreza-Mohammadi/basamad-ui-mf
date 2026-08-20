@@ -82,7 +82,7 @@ interface ViewBox { x: number; y: number; w: number; h: number; }
 const PAD = 40;
 const NODE_PITCH = 72;
 const REAL_CARD_W = 108;
-const CARD_H = 100;
+const CARD_H = 112;
 const VIRT_W = 44;
 const NCARD_TOP = 16;
 const PIPE_Y = 228;
@@ -119,8 +119,6 @@ export class KilnSceneComponent implements OnInit, OnChanges, OnDestroy {
 
   readonly chamberVMs = signal<ChamberVM[]>([]);
   readonly nodeVMs = signal<NodeVM[]>([]);
-  /** Node indices whose card currently shows عدد پخت instead of شماره نود. */
-  readonly cookToggled = signal<ReadonlySet<number>>(new Set());
   readonly canvas = signal<ViewBox>({ x: 0, y: 0, w: 1200, h: 480 });
   readonly viewBox = signal<ViewBox>({ x: 0, y: 0, w: 1200, h: 480 });
   readonly chBottom = signal<number>(440);
@@ -241,7 +239,7 @@ export class KilnSceneComponent implements OnInit, OnChanges, OnDestroy {
         valveNumber: d.valve,
         valveStateCol: valveStateColor(d.valveState),
         valveOpen: d.valveOpen,
-        valveOpenText: `${Math.round(d.valveOpen)}`,
+        valveOpenText: `${Math.round(d.valveOpen)}%`,
         flamePath: this.flamePath(cx, PIPE_Y + 9, 4 + (d.valveOpen / 100) * 20),
         showFlame: !!d.valveMode && d.valveOpen > 0,
         cardX, cardY, stripPath,
@@ -281,18 +279,12 @@ export class KilnSceneComponent implements OnInit, OnChanges, OnDestroy {
 
   onChamberClick(vm: ChamberVM): void { this.chamberSelect.emit(vm.data); }
 
-  /** Toggle شماره نود <-> عدد پخت. Triggered only from the node-number text,
-   *  works both zoomed (card) and un-zoomed (overview). */
+  /** Keep node selection on the number without replacing it with the cook value. */
   onNumberClick(vm: NodeVM, ev: Event): void {
     ev.stopPropagation();
     if (this.dragMoved || !vm.hasCook) return;
-    const next = new Set(this.cookToggled());
-    next.has(vm.i) ? next.delete(vm.i) : next.add(vm.i);
-    this.cookToggled.set(next);
     this.nodeSelect.emit(vm.data);
   }
-
-  showsCook(i: number): boolean { return this.cookToggled().has(i); }
 
   /** Downward-pointing flame teardrop, tip at (cx, top+h). */
   private flamePath(cx: number, top: number, h: number): string {

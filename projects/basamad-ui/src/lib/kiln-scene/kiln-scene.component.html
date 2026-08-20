@@ -86,21 +86,22 @@
             <path class="valve__flame" [attr.d]="vm.flamePath" fill="url(#ks-flame)" />
           }
           <!-- valve body: color = RangShir state (no number inside) -->
-          <rect [attr.x]="vm.cx - 9" [attr.y]="PIPE_Y - 10" width="18" height="20" rx="3"
-            [attr.fill]="vm.valveStateCol" stroke="#0a0f14" stroke-width="1" />
+          <rect class="valve__body" [attr.x]="vm.cx - 15" [attr.y]="PIPE_Y - 14" width="30" height="28" rx="5"
+            [attr.fill]="vm.valveStateCol" stroke="#0a0f14" stroke-width="2" />
           <!-- handle: green = automatic, red = manual/دستی -->
-          <line [attr.x1]="vm.cx" [attr.y1]="PIPE_Y - 10" [attr.x2]="vm.cx" [attr.y2]="PIPE_Y - 20"
-            [attr.stroke]="vm.valveMode === 'manual' ? '#ff3b30' : '#34c759'" stroke-width="2" />
-          <line [attr.x1]="vm.cx - 7" [attr.y1]="PIPE_Y - 21" [attr.x2]="vm.cx + 7" [attr.y2]="PIPE_Y - 21"
-            [attr.stroke]="vm.valveMode === 'manual' ? '#ff3b30' : '#34c759'" stroke-width="2.5" stroke-linecap="round" />
+          <line [attr.x1]="vm.cx" [attr.y1]="PIPE_Y - 14" [attr.x2]="vm.cx" [attr.y2]="PIPE_Y - 27"
+            [attr.stroke]="vm.valveMode === 'manual' ? '#ff3b30' : '#34c759'" stroke-width="3.5" />
+          <line [attr.x1]="vm.cx - 11" [attr.y1]="PIPE_Y - 28" [attr.x2]="vm.cx + 11" [attr.y2]="PIPE_Y - 28"
+            [attr.stroke]="vm.valveMode === 'manual' ? '#ff3b30' : '#34c759'" stroke-width="4" stroke-linecap="round" />
           <!-- valve NUMBER above the valve, readable, plaque bordered by state color -->
-          <line [attr.x1]="vm.cx" [attr.y1]="PIPE_Y - 21" [attr.x2]="vm.cx" [attr.y2]="PIPE_Y - 28" stroke="#5a6672" stroke-width="1.4" />
-          <rect [attr.x]="vm.cx - 13" [attr.y]="PIPE_Y - 47" width="26" height="19" rx="5"
-            fill="#0e1319" [attr.stroke]="vm.valveStateCol" stroke-width="1.6" />
-          <text class="valve__num" [attr.x]="vm.cx" [attr.y]="PIPE_Y - 33" text-anchor="middle">{{ vm.valveNumber }}</text>
+          <line [attr.x1]="vm.cx" [attr.y1]="PIPE_Y - 28" [attr.x2]="vm.cx" [attr.y2]="PIPE_Y - 36" stroke="#8794a0" stroke-width="2" />
+          <rect class="valve__badge" [attr.x]="vm.cx - 21" [attr.y]="PIPE_Y - 64" width="42" height="28" rx="7"
+            fill="#0b1118" [attr.stroke]="vm.valveStateCol" stroke-width="2.5" />
+          <text class="valve__num" [attr.x]="vm.cx" [attr.y]="PIPE_Y - 44" text-anchor="middle">{{ vm.valveNumber }}</text>
           <!-- open amount (only zoomed) -->
           @if (detail() === 'card') {
-            <text class="valve__open" [attr.x]="vm.cx" [attr.y]="WALL_TOP + 15" text-anchor="middle">{{ vm.valveOpenText }}</text>
+            <rect class="valve__open-badge" [attr.x]="vm.cx - 27" [attr.y]="PIPE_Y - 100" width="54" height="28" rx="7" />
+            <text class="valve__open" [attr.x]="vm.cx" [attr.y]="PIPE_Y - 80" text-anchor="middle">{{ vm.valveOpenText }}</text>
           }
         </g>
       }
@@ -112,11 +113,14 @@
         @if (vm.isVirtual) {
           <text class="ov-virt" [attr.x]="vm.cx" [attr.y]="vm.ovTempY" text-anchor="middle" [attr.fill]="vm.color">{{ vm.tempText }}</text>
         } @else {
-          <!-- click the number (even un-zoomed) to toggle شماره نود <-> عدد پخت -->
-          <text class="ov-num" [class.ov-num--cook]="showsCook(vm.i)" [class.ov-num--clickable]="vm.hasCook"
+          <text class="ov-num" [class.ov-num--clickable]="vm.hasCook"
             [attr.x]="vm.cx" [attr.y]="NCARD_TOP + 40" text-anchor="middle"
-            (click)="onNumberClick(vm, $event)">{{ showsCook(vm.i) ? vm.cookText : vm.number }}</text>
+            (click)="onNumberClick(vm, $event)">{{ vm.number }}</text>
           <text class="ov-temp" [attr.x]="vm.cx" [attr.y]="NCARD_TOP + 82" text-anchor="middle" [attr.fill]="vm.color">{{ vm.tempText }}</text>
+          @if (vm.hasCook) {
+            <text class="ov-cook" [attr.x]="vm.cx" [attr.y]="NCARD_TOP + 120" text-anchor="middle">{{ vm.cookText }}</text>
+            <text class="ov-cook-label" [attr.x]="vm.cx" [attr.y]="NCARD_TOP + 136" text-anchor="middle">عدد پخت</text>
+          }
         }
       }
     } @else {
@@ -138,11 +142,10 @@
               fill="#0d131b" fill-opacity="0.96" stroke="#2b333d" stroke-width="1.5" />
             <path [attr.d]="vm.stripPath" [attr.fill]="vm.color" />
 
-            <!-- click the number to toggle شماره نود <-> عدد پخت -->
-            <text class="card__id" [class.card__id--cook]="showsCook(vm.i)" [class.card__id--clickable]="vm.hasCook"
+            <text class="card__id" [class.card__id--clickable]="vm.hasCook"
               [attr.x]="vm.cardX + REAL_CARD_W - 10" [attr.y]="vm.cardY + 30" text-anchor="end"
-              (click)="onNumberClick(vm, $event)">{{ showsCook(vm.i) ? vm.cookText : vm.number }}</text>
-            <text class="card__idlabel" [attr.x]="vm.cardX + REAL_CARD_W - 10" [attr.y]="vm.cardY + 45" text-anchor="end">{{ showsCook(vm.i) ? 'عدد پخت' : (vm.hasCook ? 'نود ⇄ پخت' : 'شماره نود') }}</text>
+              (click)="onNumberClick(vm, $event)">{{ vm.number }}</text>
+            <text class="card__idlabel" [attr.x]="vm.cardX + REAL_CARD_W - 10" [attr.y]="vm.cardY + 45" text-anchor="end">شماره نود</text>
 
             @if (vm.battShow) {
               <rect [attr.x]="vm.cardX + 9" [attr.y]="vm.cardY + 15" width="20" height="11" rx="2" fill="none" stroke="#7d8894" stroke-width="1.3" />
@@ -153,9 +156,14 @@
               <circle [attr.cx]="vm.cardX + 16" [attr.cy]="vm.cardY + 35" r="4" fill="#ff9f0a" />
             }
 
-            <line [attr.x1]="vm.cardX + 10" [attr.y1]="vm.cardY + 58" [attr.x2]="vm.cardX + REAL_CARD_W - 10" [attr.y2]="vm.cardY + 58" stroke="#222a33" stroke-width="1" />
-            <text class="card__label" [attr.x]="vm.cardX + REAL_CARD_W - 10" [attr.y]="vm.cardY + 82" text-anchor="end">دما</text>
-            <text class="card__temp" [attr.x]="vm.cardX + 10" [attr.y]="vm.cardY + 83" text-anchor="start" [attr.fill]="vm.color">{{ vm.tempText }}</text>
+            @if (vm.hasCook) {
+              <text class="card__cook-label" [attr.x]="vm.cardX + REAL_CARD_W - 10" [attr.y]="vm.cardY + 69" text-anchor="end">عدد پخت</text>
+              <text class="card__cook" [attr.x]="vm.cardX + 10" [attr.y]="vm.cardY + 69" text-anchor="start">{{ vm.cookText }}</text>
+            }
+
+            <line [attr.x1]="vm.cardX + 10" [attr.y1]="vm.cardY + 80" [attr.x2]="vm.cardX + REAL_CARD_W - 10" [attr.y2]="vm.cardY + 80" stroke="#222a33" stroke-width="1" />
+            <text class="card__label" [attr.x]="vm.cardX + REAL_CARD_W - 10" [attr.y]="vm.cardY + 105" text-anchor="end">دما</text>
+            <text class="card__temp" [attr.x]="vm.cardX + 10" [attr.y]="vm.cardY + 106" text-anchor="start" [attr.fill]="vm.color">{{ vm.tempText }}</text>
           </g>
         }
       }
