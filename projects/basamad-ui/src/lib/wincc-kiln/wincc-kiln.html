@@ -1,0 +1,319 @@
+<section
+  class="wincc-kiln"
+  [class.wincc-kiln--mobile]="mobile"
+  [style.height.px]="rowHeight()"
+>
+  <svg
+    class="wincc-kiln__svg"
+    [attr.viewBox]="viewBoxAttr()"
+    preserveAspectRatio="none"
+    role="img"
+    [attr.aria-label]="'نمای WinCC کوره، رخ ' + rokhNumber"
+  >
+    <defs>
+      <linearGradient [attr.id]="bandGradientId" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#fab16f" />
+        <stop offset="1" stop-color="#e88d48" />
+      </linearGradient>
+      <linearGradient [attr.id]="labelGradientId" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stop-color="#fab16f" />
+        <stop offset="1" stop-color="#e88d48" />
+      </linearGradient>
+      <pattern
+        [attr.id]="brickPatternId"
+        patternUnits="userSpaceOnUse"
+        [attr.width]="brickWidth()"
+        [attr.height]="brickTileHeight()"
+      >
+        <rect
+          x="0"
+          y="0"
+          [attr.width]="brickWidth()"
+          [attr.height]="brickTileHeight()"
+          fill="#6f422c"
+        />
+        <path
+          [attr.d]="brickPatternPath()"
+          fill="none"
+          stroke="#97684b"
+          stroke-opacity="0.55"
+          stroke-width="0.8"
+        />
+      </pattern>
+    </defs>
+
+    <!-- kiln body -->
+    <rect
+      [attr.x]="topBand().x"
+      [attr.y]="topBand().y"
+      [attr.width]="topBand().width"
+      [attr.height]="wall().y + wall().height - topBand().y"
+      fill="#030405"
+    />
+
+    <!-- brick wall -->
+    <rect
+      [attr.x]="wall().x"
+      [attr.y]="wall().y"
+      [attr.width]="wall().width"
+      [attr.height]="wall().height"
+      [attr.fill]="'url(#' + brickPatternId + ')'"
+    />
+
+    <!-- top gas band -->
+    <rect
+      [attr.x]="topBand().x"
+      [attr.y]="topBand().y"
+      [attr.width]="topBand().width"
+      [attr.height]="topBand().height"
+      [attr.fill]="'url(#' + bandGradientId + ')'"
+    />
+    <line
+      [attr.x1]="topBand().x"
+      [attr.y1]="topBand().y + topBand().height"
+      [attr.x2]="topBand().x + topBand().width"
+      [attr.y2]="topBand().y + topBand().height"
+      stroke="#5b2d19"
+      stroke-width="1"
+    />
+
+    <!-- chambers -->
+    <g class="wincc-chambers">
+      @for (vm of chamberVMs(); track $index) {
+        <g>
+          <path [attr.d]="vm.archPath" class="wincc-chamber__arch" />
+
+          @if (vm.isFull) {
+            @for (brick of vm.bricks; track $index) {
+              <rect
+                [attr.x]="brick.x"
+                [attr.y]="brick.y"
+                [attr.width]="brick.width"
+                [attr.height]="brick.height"
+                [attr.fill]="brick.alarm ? '#aa3723' : '#824627'"
+              />
+            }
+          }
+
+          @if (vm.productName || !vm.isFull) {
+            <rect
+              class="wincc-chamber__product-box"
+              [attr.x]="vm.productBox.x"
+              [attr.y]="vm.productBox.y"
+              [attr.width]="vm.productBox.width"
+              [attr.height]="vm.productBox.height"
+            />
+            <text
+              class="wincc-chamber__product-name"
+              [class.wincc-chamber__product-name--empty]="!vm.isFull"
+              [attr.x]="vm.productTextX"
+              [attr.y]="vm.productTextY"
+              [attr.font-size]="vm.productTextSize"
+              text-anchor="middle"
+              dominant-baseline="central"
+            >{{ vm.isFull ? vm.productName : 'خالی' }}</text>
+          }
+
+          <rect
+            [attr.x]="vm.plaque.x"
+            [attr.y]="vm.plaque.y"
+            [attr.width]="vm.plaque.width"
+            [attr.height]="vm.plaque.height"
+            [attr.fill]="cyan"
+          />
+          <text
+            class="wincc-chamber__number"
+            [attr.x]="vm.plaqueTextX"
+            [attr.y]="vm.plaqueTextY"
+            text-anchor="middle"
+            dominant-baseline="central"
+          >{{ vm.number }}</text>
+        </g>
+      }
+    </g>
+
+    <!-- sensors -->
+    <g class="wincc-sensors">
+      @for (vm of sensorVMs(); track $index) {
+        <g
+          class="wincc-sensor"
+          [class.wincc-sensor--virtual]="vm.isVirtual"
+        >
+          <line
+            [attr.x1]="vm.x"
+            [attr.y1]="vm.stemTopY"
+            [attr.x2]="vm.x"
+            [attr.y2]="topBand().y + 1"
+            class="wincc-sensor__stem"
+          />
+          <line
+            [attr.x1]="vm.x"
+            [attr.y1]="vm.stemTopY"
+            [attr.x2]="vm.stemX2"
+            [attr.y2]="vm.stemTopY - 4"
+            class="wincc-sensor__stem"
+          />
+
+          @if (vm.alarm) {
+            <circle
+              class="wincc-sensor__alarm-glow"
+              [attr.cx]="vm.x"
+              [attr.cy]="topBand().y - 7"
+              r="7"
+            />
+            <circle
+              class="wincc-sensor__alarm"
+              [attr.cx]="vm.x"
+              [attr.cy]="topBand().y - 7"
+              r="4.5"
+            />
+          }
+
+          <text
+            class="wincc-sensor__number"
+            [class.wincc-sensor__number--error]="vm.error"
+            [attr.x]="vm.x"
+            [attr.y]="topBand().y + topBand().height / 2"
+            [attr.font-size]="vm.numberSize"
+            text-anchor="middle"
+            dominant-baseline="central"
+          >{{ vm.number }}</text>
+
+          @if (vm.valve) {
+            <g class="wincc-valve">
+              <defs>
+                <linearGradient
+                  [attr.id]="vm.valve.gradientId"
+                  x1="0"
+                  y1="0"
+                  x2="0"
+                  y2="1"
+                >
+                  <stop offset="0" [attr.stop-color]="vm.valve.fillLight" />
+                  <stop offset="1" [attr.stop-color]="vm.valve.fill" />
+                </linearGradient>
+              </defs>
+              <rect
+                [attr.x]="vm.valve.x"
+                [attr.y]="vm.valve.y"
+                [attr.width]="vm.valve.size"
+                [attr.height]="vm.valve.size"
+                [attr.rx]="vm.valve.radius"
+                [attr.fill]="'url(#' + vm.valve.gradientId + ')'"
+                stroke="#14411a"
+                stroke-width="1"
+              />
+              <text
+                [attr.x]="vm.valve.x + vm.valve.size / 2"
+                [attr.y]="vm.valve.y + vm.valve.size / 2"
+                [attr.font-size]="vm.valve.textSize"
+                text-anchor="middle"
+                dominant-baseline="central"
+                fill="#ffffff"
+              >{{ vm.valve.number }}</text>
+            </g>
+          }
+
+          <g
+            class="wincc-sensor__reading"
+            role="button"
+            tabindex="0"
+            [attr.aria-label]="'دمای نود ' + vm.number + '، ' + vm.valueText + '، نمایش عدد پخت'"
+            [attr.aria-expanded]="vm.cookVisible"
+            (click)="toggleCookValue($event, vm)"
+            (keydown)="onSensorKeydown($event, vm)"
+          >
+            <rect
+              [attr.x]="vm.box.x + 2"
+              [attr.y]="vm.box.y + 2"
+              [attr.width]="vm.box.width"
+              [attr.height]="vm.box.height"
+              class="wincc-sensor__shadow"
+            />
+            <rect
+              [attr.x]="vm.box.x"
+              [attr.y]="vm.box.y"
+              [attr.width]="vm.box.width"
+              [attr.height]="vm.box.height"
+              [attr.fill]="
+                vm.isVirtual
+                  ? '#dadee2'
+                  : vm.boxError
+                    ? '#ffdede'
+                    : '#ffffff'
+              "
+              stroke="#dcdcdc"
+              stroke-width="0.8"
+            />
+            <text
+              class="wincc-sensor__value"
+              [class.wincc-sensor__value--virtual]="vm.isVirtual"
+              [attr.x]="vm.box.x + vm.box.width / 2"
+              [attr.y]="vm.box.y + vm.box.height / 2"
+              [attr.font-size]="vm.valueSize"
+              text-anchor="middle"
+              dominant-baseline="central"
+              [attr.fill]="vm.isVirtual ? '#67687a' : temperatureBlue"
+            >{{ vm.valueText }}</text>
+
+            @if (vm.cookVisible) {
+              <g
+                class="wincc-sensor__cook"
+                [class.wincc-sensor__cook--invalid]="vm.cookInvalid"
+              >
+                <rect
+                  [attr.x]="vm.cookBox.x"
+                  [attr.y]="vm.cookBox.y"
+                  [attr.width]="vm.cookBox.width"
+                  [attr.height]="vm.cookBox.height"
+                  [attr.fill]="vm.isVirtual ? '#cdd2d9' : '#e2eff7'"
+                  [attr.stroke]="vm.isVirtual ? '#9696a5' : cyan"
+                  stroke-width="0.8"
+                />
+                <text
+                  class="wincc-sensor__cook-value"
+                  [attr.x]="vm.cookBox.x + vm.cookBox.width / 2"
+                  [attr.y]="vm.cookBox.y + vm.cookBox.height / 2"
+                  [attr.font-size]="vm.cookSize"
+                  text-anchor="middle"
+                  dominant-baseline="central"
+                  [attr.fill]="vm.isVirtual ? '#70697a' : '#164b68'"
+                >{{ vm.cookText }}</text>
+              </g>
+            }
+          </g>
+        </g>
+      }
+    </g>
+
+    <rect
+      [attr.x]="topBand().x"
+      [attr.y]="topBand().y"
+      [attr.width]="topBand().width"
+      [attr.height]="wall().y + wall().height - topBand().y"
+      fill="none"
+      stroke="#5b2d19"
+      stroke-width="1"
+    />
+
+    <!-- side label -->
+    <rect
+      [attr.x]="label().x"
+      [attr.y]="label().y"
+      [attr.width]="label().width"
+      [attr.height]="label().height"
+      [attr.fill]="'url(#' + labelGradientId + ')'"
+      stroke="#5d2d19"
+      stroke-width="1"
+    />
+    <g [attr.transform]="labelTransform()">
+      <text
+        class="wincc-kiln__label"
+        x="0"
+        y="0"
+        text-anchor="middle"
+        dominant-baseline="central"
+      >{{ labelText() }}</text>
+    </g>
+  </svg>
+</section>

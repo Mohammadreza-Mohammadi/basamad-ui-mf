@@ -17,7 +17,8 @@ import {
     ChartJabejayComponent,
     GroupedBarChartComponent,
     KilnAlignerComponent,
-    KilnRokh
+    KilnRokh,
+    WinccKiln
 } from './lib/components';
 
 export type ComponentMap = { [key: string]: Type<unknown> };
@@ -32,5 +33,6 @@ export const COMPONENT_MAP: ComponentMap = {
     ChartJabejay:                 ChartJabejayComponent,
     GroupedBarChart:              GroupedBarChartComponent,
     KilnAligner:                  KilnAlignerComponent,
-    KilnRokh:                     KilnRokh
+    KilnRokh:                     KilnRokh,
+    WinccKiln:                    WinccKiln
 };

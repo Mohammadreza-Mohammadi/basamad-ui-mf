@@ -35,7 +35,8 @@ import {
   ChartJabejayComponent,
   GroupedBarChartComponent,
   KilnAlignerComponent,
-  KilnRokh
+  KilnRokh,
+  WinccKiln
 } from './components';
 import { FundamentalNgxCoreModule } from '@fundamental-ngx/core';
 import { FormModule } from '@fundamental-ngx/core/form';
@@ -56,7 +57,8 @@ const components = [
   ChartJabejayComponent,
   GroupedBarChartComponent,
   KilnAlignerComponent,
-  KilnRokh
+  KilnRokh,
+  WinccKiln
 ];
 const pipes = [
   BuGroupByPipe,

@@ -1,84 +1,56 @@
-@if(!transmitters.length){
-
-<a
-  fd-object-status
-  status="negative"
-  glyph="error"
-  [clickable]="true"
-  [large]="true"
-  [inverted]="true"
-  label="کوره غیر فعال است."
-  [attr.aria-label]="'داده ی دریافت نشده است.'"
-></a>
-
-}@else{ @if(startOfFirstNodePosition==='3' || startOfFirstNodePosition==='4') {
-<bu-kiln-rokh
-  [title]="title"
-  [rokhNumber]="2"
-  [deviceSize]="deviceSize"
-  [mobile]="mobile"
-  [transmitters]="
-    startOfFirstNodePosition === '3'
-      ? (transmitters | filter: { RokhNumber: '2' })
-      : (transmitters | filter: { RokhNumber: '2' } | reverse)
-  "
-  [ghamirs]="
-    startOfFirstNodePosition === '3'
-      ? (ghamirs | filter: { RokhNumber: '2' })
-      : (ghamirs | filter: { RokhNumber: '2' } | reverse)
-  "
->
-</bu-kiln-rokh>
-<bu-kiln-rokh
-  [title]="title"
-  [rokhNumber]="1"
-  [deviceSize]="deviceSize"
-  [mobile]="mobile"
-  [transmitters]="
-    startOfFirstNodePosition === '3'
-      ? (transmitters | filter: { RokhNumber: '1' } | reverse)
-      : (transmitters | filter: { RokhNumber: '1' })
-  "
-  [ghamirs]="
-    startOfFirstNodePosition === '3'
-      ? (ghamirs | filter: { RokhNumber: '1' } | reverse)
-      : (ghamirs | filter: { RokhNumber: '1' })
-  "
->
-</bu-kiln-rokh>
+@if (!transmitters.length) {
+  <a
+    fd-object-status
+    status="negative"
+    glyph="error"
+    [clickable]="true"
+    [large]="true"
+    [inverted]="true"
+    label="کوره غیر فعال است."
+    aria-label="داده‌ای دریافت نشده است."
+  ></a>
 } @else {
-<bu-kiln-rokh
-  [title]="title"
-  [rokhNumber]="1"
-  [deviceSize]="deviceSize"
-  [mobile]="mobile"
-  [transmitters]="
-    startOfFirstNodePosition === '1'
-      ? (transmitters | filter: { RokhNumber: '1' } | reverse)
-      : (transmitters | filter: { RokhNumber: '1' })
-  "
-  [ghamirs]="
-    startOfFirstNodePosition === '1'
-      ? (ghamirs | filter: { RokhNumber: '1' } | reverse)
-      : (ghamirs | filter: { RokhNumber: '1' })
-  "
->
-</bu-kiln-rokh>
-<bu-kiln-rokh
-  [title]="title"
-  [rokhNumber]="2"
-  [deviceSize]="deviceSize"
-  [mobile]="mobile"
-  [transmitters]="
-    startOfFirstNodePosition === '1'
-      ? (transmitters | filter: { RokhNumber: '2' } )
-      : (transmitters | filter: { RokhNumber: '2' }| reverse)
-  "
-  [ghamirs]="
-    startOfFirstNodePosition === '1'
-      ? (ghamirs | filter: { RokhNumber: '2' })
-      : (ghamirs | filter: { RokhNumber: '2' } | reverse)
-  "
->
-</bu-kiln-rokh>
-} }
+  @if (rokh1OnTop()) {
+    <bu-wincc-kiln
+      [title]="title"
+      [kilnNumber]="kilnNumber"
+      [rokhNumber]="1"
+      [startsFromRight]="startsFromRight(1)"
+      [deviceSize]="deviceSize"
+      [mobile]="mobile"
+      [transmitters]="transmitters | filter: { RokhNumber: '1' }"
+      [ghamirs]="ghamirs | filter: { RokhNumber: '1' }"
+    ></bu-wincc-kiln>
+    <bu-wincc-kiln
+      [title]="title"
+      [kilnNumber]="kilnNumber"
+      [rokhNumber]="2"
+      [startsFromRight]="startsFromRight(2)"
+      [deviceSize]="deviceSize"
+      [mobile]="mobile"
+      [transmitters]="transmitters | filter: { RokhNumber: '2' }"
+      [ghamirs]="ghamirs | filter: { RokhNumber: '2' }"
+    ></bu-wincc-kiln>
+  } @else {
+    <bu-wincc-kiln
+      [title]="title"
+      [kilnNumber]="kilnNumber"
+      [rokhNumber]="2"
+      [startsFromRight]="startsFromRight(2)"
+      [deviceSize]="deviceSize"
+      [mobile]="mobile"
+      [transmitters]="transmitters | filter: { RokhNumber: '2' }"
+      [ghamirs]="ghamirs | filter: { RokhNumber: '2' }"
+    ></bu-wincc-kiln>
+    <bu-wincc-kiln
+      [title]="title"
+      [kilnNumber]="kilnNumber"
+      [rokhNumber]="1"
+      [startsFromRight]="startsFromRight(1)"
+      [deviceSize]="deviceSize"
+      [mobile]="mobile"
+      [transmitters]="transmitters | filter: { RokhNumber: '1' }"
+      [ghamirs]="ghamirs | filter: { RokhNumber: '1' }"
+    ></bu-wincc-kiln>
+  }
+}

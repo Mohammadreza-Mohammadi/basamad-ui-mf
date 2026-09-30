@@ -1,0 +1,170 @@
+:host {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  direction: rtl;
+  font-family: Tahoma, 'Segoe UI', Arial, sans-serif;
+}
+
+.wincc-kiln {
+  width: 100%;
+  min-width: 0;
+
+  &--mobile {
+    width: max(100%, 1100px);
+    min-width: 1100px;
+  }
+
+  &__svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    background: #050607;
+    border: 1px solid #5b2d19;
+    touch-action: pan-x pan-y pinch-zoom;
+
+    // keep numeric SVG text LTR so anchors don't flip under the RTL host
+    text {
+      direction: ltr;
+      unicode-bidi: isolate;
+    }
+  }
+
+  &__label {
+    fill: #1d140e;
+    font-weight: 700;
+    font-size: 14px;
+  }
+}
+
+.wincc-chamber__arch {
+  fill: #14100d;
+  stroke: #231509;
+  stroke-width: 1;
+}
+
+.wincc-chamber__number {
+  fill: #ffffff;
+  font-weight: 700;
+  font-size: 9px;
+}
+
+.wincc-chamber__product-box {
+  fill: rgb(7 8 9 / 86%);
+  stroke: #77401f;
+  stroke-width: 0.7;
+}
+
+.wincc-chamber__product-name {
+  fill: #ffd38a;
+  font-weight: 700;
+
+  &--empty {
+    fill: #929292;
+    font-weight: 600;
+  }
+}
+
+.wincc-sensor__number {
+  fill: #211914;
+  font-weight: 700;
+
+  &--error {
+    fill: #ffd7d2;
+  }
+}
+
+.wincc-sensor__stem {
+  stroke: #fff;
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.wincc-sensor__alarm,
+.wincc-sensor__alarm-glow {
+  pointer-events: none;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: wincc-alarm-blink 900ms steps(1, end) infinite;
+}
+
+.wincc-sensor__alarm {
+  fill: #e11414;
+}
+
+.wincc-sensor__alarm-glow {
+  fill: rgb(255 30 30 / 34%);
+}
+
+.wincc-sensor__reading {
+  cursor: pointer;
+  outline: none;
+
+  &:focus-visible rect:not(.wincc-sensor__shadow) {
+    stroke: #fff;
+    stroke-width: 1.5;
+  }
+}
+
+.wincc-sensor__shadow {
+  fill: rgb(0 0 0 / 31%);
+  pointer-events: none;
+}
+
+.wincc-sensor__value {
+  font-weight: 700;
+
+  &--virtual {
+    font-weight: 600;
+  }
+}
+
+.wincc-sensor__cook-value {
+  font-weight: 700;
+}
+
+.wincc-sensor__cook--invalid {
+  animation: wincc-cook-alarm-blink 2s ease-in-out infinite;
+
+  rect {
+    fill: #b82318;
+    stroke: #ffddd8;
+    stroke-width: 1.1;
+  }
+
+  text {
+    fill: #fff;
+  }
+}
+
+@keyframes wincc-alarm-blink {
+  0%,
+  49% {
+    opacity: 1;
+  }
+
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes wincc-cook-alarm-blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.28;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wincc-sensor__alarm,
+  .wincc-sensor__alarm-glow,
+  .wincc-sensor__cook--invalid {
+    animation: none;
+  }
+}

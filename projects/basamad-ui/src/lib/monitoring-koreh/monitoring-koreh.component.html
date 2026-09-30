@@ -1,22 +1,3 @@
-<ng-container> </ng-container>
-<ng-container
-  *ngTemplateOutlet="
-        header;
-        context: {
-            mo: mo,
-            layout94:layout94,            
-        }
-    "
-></ng-container>
-<ng-template #header let-layout94="layout94">
-  <fd-toolbar [fdType]="'transparent'">
-    <h4 fd-title>
-      @if (mo) {
-        {{ 'عنوان' | val: mo }}
-      }
-    </h4>
-  </fd-toolbar>
-</ng-template>
 @if(mo){
 <!-- <div class="koreh-segmented koreh pb-1 pt-1" style="display: flex">
   <div style="flex: 1; padding-right: 1rem">

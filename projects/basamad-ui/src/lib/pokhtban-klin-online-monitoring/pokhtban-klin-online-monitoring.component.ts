@@ -30,15 +30,32 @@ export class PokhtbanKlinOnlineMonitoringComponent
   @ViewChild('containerRef', { static: true }) containerRef!: ElementRef;
   @ViewChild('wrapperRef', { static: false }) wrapperRef!: ElementRef;
 
-  @Input() mobile!: boolean;
-  @Input() allColumns!: any[];
-  @Input() rokhNumber!: number;
-  @Input() startOfFirstNodePosition: string;
-  @Input() title!: string;
-  @Input() deviceSize!: AbbrevationDeviceSize;
-  @Input() ghamirs!: MetaobjectDataModel[];
-  @Input() transmitters!: MetaobjectDataModel[];
+  @Input() mobile = false;
+  @Input() allColumns: any[] = [];
+  @Input() rokhNumber = 1;
+  @Input() startOfFirstNodePosition = '1';
+  @Input() title = '';
+  @Input() deviceSize: AbbrevationDeviceSize = 'xl';
+  @Input() ghamirs: MetaobjectDataModel[] = [];
+  @Input() transmitters: MetaobjectDataModel[] = [];
   @Output() zoom = new EventEmitter();
+
+  get kilnNumber(): number {
+    const match = String(this.title).match(/(\d+)(?!.*\d)/);
+    return match ? Number(match[1]) : 1;
+  }
+
+  rokh1OnTop(): boolean {
+    return this.startOfFirstNodePosition === '1' ||
+      this.startOfFirstNodePosition === '2';
+  }
+
+  startsFromRight(rokh: number): boolean {
+    const rokh1StartsFromRight =
+      this.startOfFirstNodePosition === '2' ||
+      this.startOfFirstNodePosition === '4';
+    return rokh === 1 ? rokh1StartsFromRight : !rokh1StartsFromRight;
+  }
 
   /********** متدهای کمکی **********/
   onShowTransmitter(sensor: Sensor): void {

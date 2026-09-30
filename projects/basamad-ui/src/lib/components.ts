@@ -7,3 +7,4 @@ export { ChartJabejayComponent } from './chart-jabejay/chart-jabejay.component';
 export { GroupedBarChartComponent } from './grouped-bar-chart/grouped-bar-chart.component';
 export { KilnAlignerComponent } from './kiln-aligner/kiln-aligner.component';
 export { KilnRokh} from './kiln-rokh/kiln-rokh';
+export { WinccKiln } from './wincc-kiln/wincc-kiln';
