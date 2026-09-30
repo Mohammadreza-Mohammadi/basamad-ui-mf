@@ -10,6 +10,7 @@
 .wincc-kiln {
   width: 100%;
   min-width: 0;
+  position: relative;
 
   &--mobile {
     width: max(100%, 1100px);
@@ -38,6 +39,84 @@
   }
 }
 
+.wincc-kiln__unknown-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  background: #1b1713;
+  color: #fff0d0;
+}
+
+.wincc-kiln__unknown-item {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid #77401f;
+  border-radius: 0.35rem;
+
+  button {
+    padding: 0.2rem 0.5rem;
+    border: 1px solid #e9a55e;
+    border-radius: 0.25rem;
+    background: #683c20;
+    color: #fff;
+    cursor: pointer;
+  }
+
+  button:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+}
+
+.wincc-product-dialog {
+  direction: rtl;
+  width: min(100%, 28rem);
+  max-height: min(90vh, 40rem);
+  overflow: auto;
+  margin: auto;
+  padding: 1.25rem;
+  border: 1px solid #9a6a45;
+  border-radius: 0.5rem;
+  background: #211b17;
+  color: #fff;
+  box-shadow: 0 1rem 3rem rgb(0 0 0 / 50%);
+
+  h2 { margin: 0 0 0.5rem; font-size: 1.15rem; }
+  p { margin: 0.5rem 0 1rem; }
+  label { display: block; margin-bottom: 0.35rem; }
+  select {
+    width: 100%;
+    padding: 0.6rem;
+    border: 1px solid #a17a59;
+    border-radius: 0.3rem;
+    background: #fff;
+    color: #211b17;
+  }
+  button {
+    padding: 0.5rem 0.9rem;
+    border: 1px solid #a17a59;
+    border-radius: 0.3rem;
+    background: #59402d;
+    color: #fff;
+    cursor: pointer;
+  }
+  button:disabled { opacity: 0.5; cursor: default; }
+
+  &::backdrop { background: rgb(0 0 0 / 68%); }
+}
+
+.wincc-product-dialog__error { color: #ffaaa3; }
+.wincc-product-dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
 .wincc-chamber__arch {
   fill: #14100d;
   stroke: #231509;
@@ -64,6 +143,11 @@
     fill: #929292;
     font-weight: 600;
   }
+}
+
+.wincc-chamber__received-code {
+  fill: #fff0d0;
+  font-weight: 600;
 }
 
 .wincc-sensor__number {

@@ -16,6 +16,7 @@ import {
   FormPanelService,
   ControlUiPipe,
   ScrollLayoutContextHolder,
+  BarsaApi,
 } from 'barsa-novin-ray-core';
 
 
@@ -69,6 +70,20 @@ export class MonitoringKorehComponent
 
   onReset(): void {
     this.panzoom.reset();
+  }
+  onUnknownProductRefresh(): void {
+    try {
+      const form = this.FormPanelCtrlr
+        ? BarsaApi.Bw._wrap(this.FormPanelCtrlr)
+        : BarsaApi.Bw.App.GetActiveReport()?.GetHostForm?.();
+      if (form?.Reload && String(form.GetMo?.()?.GetId?.() ?? '') === String(this.mo?.Id ?? '')) {
+        form.Reload({});
+        return;
+      }
+    } catch {
+      // The monitoring view may be hosted outside a Barsa form.
+    }
+    BarsaApi.Bw.Reload();
   }
   onCloseModal(): void {}
 }

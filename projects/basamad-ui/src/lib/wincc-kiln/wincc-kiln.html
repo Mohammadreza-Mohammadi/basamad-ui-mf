@@ -1,10 +1,10 @@
 <section
   class="wincc-kiln"
   [class.wincc-kiln--mobile]="mobile"
-  [style.height.px]="rowHeight()"
 >
   <svg
     class="wincc-kiln__svg"
+    [style.height.px]="rowHeight()"
     [attr.viewBox]="viewBoxAttr()"
     preserveAspectRatio="none"
     role="img"
@@ -80,7 +80,10 @@
     <!-- chambers -->
     <g class="wincc-chambers">
       @for (vm of chamberVMs(); track $index) {
-        <g>
+        <g [attr.aria-label]="vm.productUnknown ? 'قمیر ' + vm.number + '، پر با محصول نامشخص، کد دریافتی: ' + vm.receivedCode : null">
+          @if (vm.productUnknown) {
+            <title>قمیر {{ vm.number }}، پر با محصول نامشخص، کد دریافتی: {{ vm.receivedCode }}</title>
+          }
           <path [attr.d]="vm.archPath" class="wincc-chamber__arch" />
 
           @if (vm.isFull) {
@@ -112,6 +115,16 @@
               text-anchor="middle"
               dominant-baseline="central"
             >{{ vm.isFull ? vm.productName : 'خالی' }}</text>
+            @if (vm.productUnknown) {
+              <text
+                class="wincc-chamber__received-code"
+                [attr.x]="vm.productTextX"
+                [attr.y]="vm.codeTextY"
+                [attr.font-size]="vm.productTextSize * 0.85"
+                text-anchor="middle"
+                dominant-baseline="central"
+              >کد دریافتی: {{ vm.receivedCode }}</text>
+            }
           }
 
           <rect
@@ -316,4 +329,56 @@
       >{{ labelText() }}</text>
     </g>
   </svg>
+
+  @if (unknownChambers().length) {
+    <div class="wincc-kiln__unknown-list" aria-label="قمیرهای با محصول نامشخص">
+      @for (vm of unknownChambers(); track vm.id) {
+        <div class="wincc-kiln__unknown-item">
+          <span>قمیر {{ vm.number }}: پر، محصول نامشخص</span>
+          <span>کد دریافتی: {{ vm.receivedCode }}</span>
+          <button type="button" (click)="openProductSelection(vm)" [disabled]="!vm.id || !vm.receivedCode">
+            تعیین محصول
+          </button>
+        </div>
+      }
+    </div>
+  }
+
+  @if (selection(); as selectedGhamir) {
+    <dialog #productDialog class="wincc-product-dialog"
+      [attr.aria-labelledby]="productDialogTitleId"
+      (cancel)="onProductDialogCancel($event)"
+      (close)="closeProductSelection()">
+        <h2 [id]="productDialogTitleId">تعیین محصول قمیر {{ selectedGhamir.number }}</h2>
+        <p>کد دریافتی: {{ selectedGhamir.expectedCode }}</p>
+
+        @if (productLoading()) {
+          <p role="status">در حال دریافت محصولات کارخانه…</p>
+        } @else if (!productOptions().length && !productError()) {
+          <p>برای این کارخانه محصولی تعریف نشده است.</p>
+        } @else if (productOptions().length) {
+          <label [attr.for]="productChoiceId">محصول کارخانه</label>
+          <select [id]="productChoiceId" [value]="selectedProductId() || ''"
+            (change)="onProductChange($event)" [disabled]="productSaving()">
+            <option value="">انتخاب محصول</option>
+            @for (option of productOptions(); track option.FactoryProductId) {
+              <option [value]="option.FactoryProductId">
+                {{ option.ProductName }} — کد فعلی: {{ option.CurrentCode }}
+              </option>
+            }
+          </select>
+        }
+
+        @if (productError()) {
+          <p class="wincc-product-dialog__error" role="alert">{{ productError() }}</p>
+        }
+        <div class="wincc-product-dialog__actions">
+          <button type="button" (click)="closeProductSelection()" [disabled]="productSaving()">انصراف</button>
+          <button type="button" (click)="saveProductSelection()"
+            [disabled]="productLoading() || productSaving() || !selectedProductId()">
+            {{ productSaving() ? 'در حال ثبت…' : 'ثبت محصول' }}
+          </button>
+        </div>
+    </dialog>
+  }
 </section>

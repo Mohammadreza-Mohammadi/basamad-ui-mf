@@ -8,6 +8,9 @@ import {
   NgZone,
   OnChanges,
   OnDestroy,
+  Output,
+  EventEmitter,
+  ViewChild,
   SimpleChanges,
   computed,
   inject,
@@ -15,8 +18,10 @@ import {
 } from '@angular/core';
 import {
   AbbrevationDeviceSize,
+  BarsaApi,
   BaseComponent,
   MetaobjectDataModel,
+  PortalService,
 } from 'barsa-novin-ray-core';
 
 // SVG port of the WinForms `WinccKilnControl` — a WinCC-style rendition of one kiln rokh.
@@ -39,18 +44,35 @@ interface Brick {
 }
 
 interface ChamberVM {
+  id: string;
   number: string;
   archPath: string;
   isFull: boolean;
+  productUnknown: boolean;
+  receivedCode: string;
   productName: string;
   bricks: Brick[];
   productBox: Rect;
   productTextX: number;
   productTextY: number;
   productTextSize: number;
+  codeTextY: number;
   plaque: Rect;
   plaqueTextX: number;
   plaqueTextY: number;
+}
+
+interface FactoryProductOption {
+  FactoryProductId: string | number;
+  ProductId: string | number;
+  ProductName: string;
+  CurrentCode: string | number;
+}
+
+interface UnknownProductSelection {
+  ghamirId: string;
+  number: string;
+  expectedCode: string;
 }
 
 interface ValveVM {
@@ -113,6 +135,16 @@ export class WinccKiln
 {
   private static readonly instances = new Set<WinccKiln>();
 
+  @ViewChild('productDialog')
+  set productDialog(ref: ElementRef<HTMLDialogElement> | undefined) {
+    if (!ref) return;
+    queueMicrotask(() => {
+      if (!this.destroyed && this.selection() && ref.nativeElement.isConnected && !ref.nativeElement.open) {
+        ref.nativeElement.showModal();
+      }
+    });
+  }
+
   @Input() allColumns: any[] = [];
   @Input() rokhNumber = 1;
   @Input() kilnNumber = 1;
@@ -124,16 +156,22 @@ export class WinccKiln
   /** Matches WinccKilnControl: true puts the first numbered node at the right. */
   @Input() startsFromRight = false;
   @Input() mode: 'designer' | 'runtime' = 'designer';
+  @Output() refreshRequested = new EventEmitter<void>();
 
   private readonly componentId = ++nextComponentId;
+  readonly productDialogTitleId = `wincc-product-dialog-${this.componentId}`;
+  readonly productChoiceId = `wincc-product-choice-${this.componentId}`;
   readonly bandGradientId = `wincc-band-${this.componentId}`;
   readonly labelGradientId = `wincc-label-${this.componentId}`;
   readonly brickPatternId = `wincc-brick-${this.componentId}`;
   private readonly expandedCookNumbers = new Set<string>();
   private readonly host = inject(ElementRef<HTMLElement>);
   private readonly zone = inject(NgZone);
+  private readonly portal = inject(PortalService);
   private resizeObserver?: ResizeObserver;
   private layoutWidth = 720;
+  private productRequest = 0;
+  private destroyed = false;
 
   readonly sceneWidth = signal<number>(720);
   readonly sceneHeight = signal<number>(DESKTOP_ROW_HEIGHT);
@@ -145,6 +183,13 @@ export class WinccKiln
   readonly brickWidth = signal<number>(30);
   readonly sensorVMs = signal<SensorVM[]>([]);
   readonly chamberVMs = signal<ChamberVM[]>([]);
+  readonly unknownChambers = computed(() => this.chamberVMs().filter((item) => item.productUnknown));
+  readonly selection = signal<UnknownProductSelection | null>(null);
+  readonly productOptions = signal<FactoryProductOption[]>([]);
+  readonly selectedProductId = signal<string | null>(null);
+  readonly productLoading = signal(false);
+  readonly productSaving = signal(false);
+  readonly productError = signal('');
 
   readonly viewBoxAttr = computed(
     () => `0 0 ${this.sceneWidth()} ${this.sceneHeight()}`,
@@ -194,6 +239,8 @@ export class WinccKiln
   }
 
   override ngOnDestroy(): void {
+    this.destroyed = true;
+    this.productRequest++;
     this.resizeObserver?.disconnect();
     WinccKiln.instances.delete(this);
     WinccKiln.refreshRegisteredLayouts();
@@ -266,21 +313,34 @@ export class WinccKiln
       if (right <= left + 2) continue;
 
       const isFull = this.ghamirIsFull(chamber);
-      const productName = isFull ? this.ghamirProductName(chamber) : '';
+      const productUnknown = isFull && this.ghamirProductUnknown(chamber);
+      const productName = productUnknown
+        ? 'نامشخص'
+        : isFull
+          ? this.ghamirProductName(chamber)
+          : '';
+      const receivedCode = productUnknown
+        ? String(this.ghamirField(chamber, 'كد محصول دريافتي', 'ReceivedProductCode') ?? '')
+        : '';
       const width = right - left;
       const numberSize = clamp(slot * 0.24, 7, 11);
       const plaqueWidth = clamp(slot * 0.32, 16, 26);
       const plaqueHeight = numberSize + 4;
       const centerX = (left + right) / 2;
-      const productLabelHeight = clamp(archHeight * 0.18, 14, 22);
+      const productLabelHeight = productUnknown
+        ? clamp(archHeight * 0.3, 22, 30)
+        : clamp(archHeight * 0.18, 14, 22);
 
       chamberVMs.push({
+        id: String(chamber.Id ?? ''),
         number: String(chamber.Number ?? ''),
         archPath:
           `M ${left} ${archBottom} L ${left} ${spring} ` +
           `C ${left + width * 0.08} ${archTop} ${right - width * 0.08} ${archTop} ${right} ${spring} ` +
           `L ${right} ${archBottom} Z`,
         isFull,
+        productUnknown,
+        receivedCode,
         productName,
         bricks: isFull
           ? this.buildBricks(
@@ -297,8 +357,11 @@ export class WinccKiln
           height: productLabelHeight,
         },
         productTextX: centerX,
-        productTextY: archBottom - productLabelHeight / 2 - 1,
+        productTextY: productUnknown
+          ? archBottom - productLabelHeight * 0.69 - 1
+          : archBottom - productLabelHeight / 2 - 1,
         productTextSize: clamp(slot * 0.16, 6, 10),
+        codeTextY: archBottom - productLabelHeight * 0.27 - 1,
         plaque: {
           x: centerX - clamp(slot * 0.16, 8, 13),
           y: archTop - numberSize - 4,
@@ -481,9 +544,174 @@ export class WinccKiln
     return bricks;
   }
 
+  async openProductSelection(chamber: ChamberVM): Promise<void> {
+    if (!chamber.productUnknown || !chamber.id || !chamber.receivedCode) return;
+    this.selection.set({
+      ghamirId: chamber.id,
+      number: chamber.number,
+      expectedCode: chamber.receivedCode,
+    });
+    this.selectedProductId.set(null);
+    this.productOptions.set([]);
+    await this.loadProductOptions();
+  }
+
+  closeProductSelection(): void {
+    if (this.productSaving()) return;
+    this.productRequest++;
+    this.selection.set(null);
+    this.productLoading.set(false);
+    this.productOptions.set([]);
+    this.selectedProductId.set(null);
+    this.productError.set('');
+  }
+
+  onProductDialogCancel(event: Event): void {
+    if (this.productSaving()) event.preventDefault();
+    else this.closeProductSelection();
+  }
+
+  onProductChange(event: Event): void {
+    const value = (event.target as HTMLSelectElement).value;
+    this.selectedProductId.set(value || null);
+    this.productError.set('');
+  }
+
+  async saveProductSelection(): Promise<void> {
+    const selection = this.selection();
+    const selectedId = this.selectedProductId();
+    if (!selection || this.productSaving() || this.productLoading()) return;
+    const selected = this.productOptions().find((item) =>
+      String(item.FactoryProductId) === selectedId &&
+      !!item.ProductId && String(item.ProductId) !== '0',
+    );
+    if (!selected) {
+      this.productError.set('محصول انتخاب‌شده معتبر نیست.');
+      return;
+    }
+
+    const current = this.ghamirs.find((item) => String(item.Id) === selection.ghamirId);
+    if (!current || !this.ghamirIsFull(current) ||
+        !this.ghamirProductUnknown(current) ||
+        String(this.ghamirField(current, 'كد محصول دريافتي', 'ReceivedProductCode') ?? '') !== selection.expectedCode) {
+      this.productError.set('وضعیت قمیر تغییر کرده است؛ نما را تازه‌سازی کنید.');
+      this.selectedProductId.set(null);
+      this.reportProductError(this.productError());
+      return;
+    }
+
+    this.productSaving.set(true);
+    this.productError.set('');
+    try {
+      const result = await this.portal.RunBlMethodAsync<boolean>(
+        'SetUnknownGhamirProductMapping',
+        [selection.ghamirId, selection.expectedCode, selected.FactoryProductId],
+      );
+      this.zone.run(() => {
+        if (this.destroyed) return;
+        if (result !== true) {
+          this.productError.set('ثبت محصول انجام نشد. نما را تازه‌سازی کنید.');
+          this.reportProductError(this.productError());
+          return;
+        }
+        this.productSaving.set(false);
+        this.closeProductSelection();
+        this.refreshRequested.emit();
+      });
+    } catch (error) {
+      this.zone.run(() => {
+        if (this.destroyed) return;
+        const message = this.productFailureMessage(error);
+        this.productError.set(message);
+        this.selectedProductId.set(null);
+        this.reportProductError(message, message.includes('تعارض'));
+      });
+    } finally {
+      this.zone.run(() => {
+        if (!this.destroyed) this.productSaving.set(false);
+      });
+    }
+  }
+
+  private async loadProductOptions(reportErrors = true): Promise<void> {
+    const selection = this.selection();
+    if (!selection) return;
+    const request = ++this.productRequest;
+    this.productLoading.set(true);
+    this.productError.set('');
+    try {
+      const result = await this.portal.RunBlMethodAsync<FactoryProductOption[]>(
+        'GetFactoryProductsForUnknownGhamir',
+        [selection.ghamirId, selection.expectedCode],
+      );
+      this.zone.run(() => {
+        if (this.destroyed || request !== this.productRequest) return;
+        if (!Array.isArray(result)) {
+          this.productError.set('فهرست محصولات دریافت نشد.');
+          return;
+        }
+        this.productOptions.set(result.filter((item) =>
+          item != null && item.FactoryProductId != null &&
+          String(item.FactoryProductId) !== '0' &&
+          item.ProductId != null && String(item.ProductId) !== '0',
+        ));
+      });
+    } catch (error) {
+      this.zone.run(() => {
+        if (this.destroyed || request !== this.productRequest) return;
+        this.productError.set(this.productFailureMessage(error));
+        if (reportErrors) this.reportProductError(this.productError());
+      });
+    } finally {
+      this.zone.run(() => {
+        if (!this.destroyed && request === this.productRequest) this.productLoading.set(false);
+      });
+    }
+  }
+
+  private productFailureMessage(error: unknown): string {
+    const value = error as { message?: string; Message?: string; response?: { Message?: string } };
+    const detail = typeof error === 'string'
+      ? error : String(value?.message ?? value?.Message ?? value?.response?.Message ?? '');
+    if (detail.includes('وضعیت قمیر'))
+      return 'وضعیت قمیر تغییر کرده است؛ نما را تازه‌سازی کنید.';
+    if (detail.includes('نگاشت') || detail.includes('کد اکنون'))
+      return 'نگاشت این کد با محصول دیگری تعارض دارد؛ نما را تازه‌سازی کنید.';
+    if (detail.includes('محصول انتخاب‌شده'))
+      return 'محصول انتخاب‌شده معتبر نیست.';
+    return 'خطا در دریافت یا ثبت محصول. نما را تازه‌سازی کنید.';
+  }
+
+  private reportProductError(message: string, refreshOptions = false): void {
+    BarsaApi.Bw.Msg.Error(message, () => {
+      if (this.destroyed) return;
+      if (refreshOptions && this.selection()) {
+        void this.loadProductOptions(false).finally(() => {
+          if (!this.destroyed) this.refreshRequested.emit();
+        });
+      } else {
+        this.refreshRequested.emit();
+      }
+    });
+  }
+
   // --- data helpers (same field access as bu-kiln-rokh) --------------------
   ghamirIsFull(ghamir: MetaobjectDataModel): boolean {
-    return asBoolean(ghamir.IsFull);
+    const isEmpty = this.ghamirField(ghamir, 'خالي است', 'IsEmpty');
+    if (isEmpty == null) return asBoolean(ghamir.IsFull);
+    return isEmpty === false || isEmpty === 0 ||
+      isEmpty === '0' || isEmpty === 'false' || isEmpty === 'False';
+  }
+
+  private ghamirProductUnknown(ghamir: MetaobjectDataModel): boolean {
+    return asBoolean(this.ghamirField(ghamir, 'محصول نامشخص است', 'IsProductUnknown'));
+  }
+
+  private ghamirField(ghamir: MetaobjectDataModel, caption: string, reportName: string): unknown {
+    const fields = ghamir as Record<string, any>;
+    const fieldName = fields['$FieldDict']?.[caption];
+    return (fieldName ? fields[fieldName] : undefined) ??
+      fields[caption] ?? fields[caption.replace(/ /g, '_')] ?? fields[reportName];
   }
 
   private ghamirProductName(ghamir: MetaobjectDataModel): string {
