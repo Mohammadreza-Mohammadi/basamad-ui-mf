@@ -39,7 +39,6 @@ export class PokhtbanKlinOnlineMonitoringComponent
   @Input() ghamirs: MetaobjectDataModel[] = [];
   @Input() transmitters: MetaobjectDataModel[] = [];
   @Output() zoom = new EventEmitter();
-  @Output() refreshRequested = new EventEmitter<void>();
 
   get kilnNumber(): number {
     const match = String(this.title).match(/(\d+)(?!.*\d)/);

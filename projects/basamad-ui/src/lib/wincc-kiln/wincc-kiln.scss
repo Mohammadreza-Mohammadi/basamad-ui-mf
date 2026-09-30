@@ -72,6 +72,25 @@
   }
 }
 
+.wincc-kiln__mapped-list {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  padding: 0.5rem;
+  background: #143520;
+  color: #e4ffed;
+
+  button {
+    padding: 0.2rem 0.5rem;
+    border: 1px solid #83c897;
+    border-radius: 0.25rem;
+    background: #23623a;
+    color: #fff;
+    cursor: pointer;
+  }
+}
+
 .wincc-product-dialog {
   direction: rtl;
   width: min(100%, 28rem);

@@ -8,8 +8,6 @@ import {
   NgZone,
   OnChanges,
   OnDestroy,
-  Output,
-  EventEmitter,
   ViewChild,
   SimpleChanges,
   computed,
@@ -48,6 +46,7 @@ interface ChamberVM {
   number: string;
   archPath: string;
   isFull: boolean;
+  locallyMapped: boolean;
   productUnknown: boolean;
   receivedCode: string;
   productName: string;
@@ -156,7 +155,6 @@ export class WinccKiln
   /** Matches WinccKilnControl: true puts the first numbered node at the right. */
   @Input() startsFromRight = false;
   @Input() mode: 'designer' | 'runtime' = 'designer';
-  @Output() refreshRequested = new EventEmitter<void>();
 
   private readonly componentId = ++nextComponentId;
   readonly productDialogTitleId = `wincc-product-dialog-${this.componentId}`;
@@ -172,6 +170,7 @@ export class WinccKiln
   private layoutWidth = 720;
   private productRequest = 0;
   private destroyed = false;
+  private readonly mappedProducts = new Map<string, { code: string; name: string }>();
 
   readonly sceneWidth = signal<number>(720);
   readonly sceneHeight = signal<number>(DESKTOP_ROW_HEIGHT);
@@ -184,6 +183,7 @@ export class WinccKiln
   readonly sensorVMs = signal<SensorVM[]>([]);
   readonly chamberVMs = signal<ChamberVM[]>([]);
   readonly unknownChambers = computed(() => this.chamberVMs().filter((item) => item.productUnknown));
+  readonly locallyMappedChambers = computed(() => this.chamberVMs().filter((item) => item.locallyMapped));
   readonly selection = signal<UnknownProductSelection | null>(null);
   readonly productOptions = signal<FactoryProductOption[]>([]);
   readonly selectedProductId = signal<string | null>(null);
@@ -259,6 +259,10 @@ export class WinccKiln
     const chambersSource = [...(this.ghamirs ?? [])].sort(
       (left, right) => Number(left.Number) - Number(right.Number),
     );
+    const chamberIds = new Set(chambersSource.map((item) => String(item.Id ?? '')));
+    for (const id of this.mappedProducts.keys()) {
+      if (!chamberIds.has(id)) this.mappedProducts.delete(id);
+    }
     const nodeCount = Math.max(1, nodesSource.length);
     const chamberCount = Math.max(1, chambersSource.length);
 
@@ -313,15 +317,19 @@ export class WinccKiln
       if (right <= left + 2) continue;
 
       const isFull = this.ghamirIsFull(chamber);
-      const productUnknown = isFull && this.ghamirProductUnknown(chamber);
-      const productName = productUnknown
+      const id = String(chamber.Id ?? '');
+      const rawUnknown = isFull && this.ghamirProductUnknown(chamber);
+      const rawCode = String(this.ghamirField(chamber, 'كد محصول دريافتي', 'ReceivedProductCode') ?? '');
+      const mapped = this.mappedProducts.get(id);
+      if (mapped && (!rawUnknown || mapped.code !== rawCode)) {
+        this.mappedProducts.delete(id);
+      }
+      const currentMapping = this.mappedProducts.get(id);
+      const productUnknown = rawUnknown && !currentMapping;
+      const productName = currentMapping?.name ?? (productUnknown
         ? 'نامشخص'
-        : isFull
-          ? this.ghamirProductName(chamber)
-          : '';
-      const receivedCode = productUnknown
-        ? String(this.ghamirField(chamber, 'كد محصول دريافتي', 'ReceivedProductCode') ?? '')
-        : '';
+        : isFull ? this.ghamirProductName(chamber) : '');
+      const receivedCode = productUnknown ? rawCode : '';
       const width = right - left;
       const numberSize = clamp(slot * 0.24, 7, 11);
       const plaqueWidth = clamp(slot * 0.32, 16, 26);
@@ -332,13 +340,14 @@ export class WinccKiln
         : clamp(archHeight * 0.18, 14, 22);
 
       chamberVMs.push({
-        id: String(chamber.Id ?? ''),
+        id,
         number: String(chamber.Number ?? ''),
         archPath:
           `M ${left} ${archBottom} L ${left} ${spring} ` +
           `C ${left + width * 0.08} ${archTop} ${right - width * 0.08} ${archTop} ${right} ${spring} ` +
           `L ${right} ${archBottom} Z`,
         isFull,
+        locallyMapped: !!currentMapping,
         productUnknown,
         receivedCode,
         productName,
@@ -566,6 +575,10 @@ export class WinccKiln
     this.productError.set('');
   }
 
+  refreshOnDemand(): void {
+    BarsaApi.Bw.Reload();
+  }
+
   onProductDialogCancel(event: Event): void {
     if (this.productSaving()) event.preventDefault();
     else this.closeProductSelection();
@@ -614,9 +627,13 @@ export class WinccKiln
           this.reportProductError(this.productError());
           return;
         }
+        this.mappedProducts.set(selection.ghamirId, {
+          code: selection.expectedCode,
+          name: String(selected.ProductName).trim(),
+        });
         this.productSaving.set(false);
         this.closeProductSelection();
-        this.refreshRequested.emit();
+        this.rebuild();
       });
     } catch (error) {
       this.zone.run(() => {
@@ -686,11 +703,7 @@ export class WinccKiln
     BarsaApi.Bw.Msg.Error(message, () => {
       if (this.destroyed) return;
       if (refreshOptions && this.selection()) {
-        void this.loadProductOptions(false).finally(() => {
-          if (!this.destroyed) this.refreshRequested.emit();
-        });
-      } else {
-        this.refreshRequested.emit();
+        void this.loadProductOptions(false);
       }
     });
   }

@@ -344,6 +344,15 @@
     </div>
   }
 
+  @if (locallyMappedChambers().length) {
+    <div class="wincc-kiln__mapped-list panzoom-exclude" role="status">
+      @for (vm of locallyMappedChambers(); track vm.id) {
+        <span>محصول قمیر {{ vm.number }} ثبت شد: {{ vm.productName }}</span>
+      }
+      <button type="button" (click)="refreshOnDemand()">تازه‌سازی نما</button>
+    </div>
+  }
+
   @if (selection(); as selectedGhamir) {
     <dialog #productDialog class="wincc-product-dialog panzoom-exclude"
       [attr.aria-labelledby]="productDialogTitleId"

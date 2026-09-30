@@ -20,7 +20,6 @@
       [mobile]="mobile"
       [transmitters]="transmitters | filter: { RokhNumber: '1' }"
       [ghamirs]="ghamirs | filter: { RokhNumber: '1' }"
-      (refreshRequested)="refreshRequested.emit()"
     ></bu-wincc-kiln>
     <bu-wincc-kiln
       [title]="title"
@@ -31,7 +30,6 @@
       [mobile]="mobile"
       [transmitters]="transmitters | filter: { RokhNumber: '2' }"
       [ghamirs]="ghamirs | filter: { RokhNumber: '2' }"
-      (refreshRequested)="refreshRequested.emit()"
     ></bu-wincc-kiln>
   } @else {
     <bu-wincc-kiln
@@ -43,7 +41,6 @@
       [mobile]="mobile"
       [transmitters]="transmitters | filter: { RokhNumber: '2' }"
       [ghamirs]="ghamirs | filter: { RokhNumber: '2' }"
-      (refreshRequested)="refreshRequested.emit()"
     ></bu-wincc-kiln>
     <bu-wincc-kiln
       [title]="title"
@@ -54,7 +51,6 @@
       [mobile]="mobile"
       [transmitters]="transmitters | filter: { RokhNumber: '1' }"
       [ghamirs]="ghamirs | filter: { RokhNumber: '1' }"
-      (refreshRequested)="refreshRequested.emit()"
     ></bu-wincc-kiln>
   }
 }
