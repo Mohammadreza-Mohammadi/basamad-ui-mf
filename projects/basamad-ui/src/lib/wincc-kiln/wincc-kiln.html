@@ -331,7 +331,7 @@
   </svg>
 
   @if (unknownChambers().length) {
-    <div class="wincc-kiln__unknown-list" aria-label="قمیرهای با محصول نامشخص">
+    <div class="wincc-kiln__unknown-list panzoom-exclude" aria-label="قمیرهای با محصول نامشخص">
       @for (vm of unknownChambers(); track vm.id) {
         <div class="wincc-kiln__unknown-item">
           <span>قمیر {{ vm.number }}: پر، محصول نامشخص</span>
@@ -345,7 +345,7 @@
   }
 
   @if (selection(); as selectedGhamir) {
-    <dialog #productDialog class="wincc-product-dialog"
+    <dialog #productDialog class="wincc-product-dialog panzoom-exclude"
       [attr.aria-labelledby]="productDialogTitleId"
       (cancel)="onProductDialogCancel($event)"
       (close)="closeProductSelection()">
