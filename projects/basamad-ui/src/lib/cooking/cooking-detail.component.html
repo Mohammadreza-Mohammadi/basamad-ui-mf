@@ -1,0 +1,219 @@
+<section class="ck-card query-card">
+  <div class="ck-toolbar">
+    <label class="ck-field">
+      <span>کوره</span>
+      <select [value]="kilnId() ?? ''" (change)="kilnId.set($any($event.target).value)">
+        @for (kiln of kilns; track kiln.id) {
+          <option [value]="kiln.id">{{ kilnLabel(kiln) }}</option>
+        }
+      </select>
+    </label>
+    <label class="ck-field">
+      <span>نود</span>
+      <input type="number" min="1" max="512" [value]="node()" (change)="node.set(+$any($event.target).value || 1)" />
+    </label>
+    <label class="ck-field">
+      <span>از</span>
+      <input type="datetime-local" [value]="fromInput()" (change)="fromInput.set($any($event.target).value)" />
+    </label>
+    <label class="ck-field">
+      <span>تا</span>
+      <input type="datetime-local" [value]="toInput()" (change)="toInput.set($any($event.target).value)" />
+    </label>
+    <div class="ck-chips quick">
+      <button type="button" class="ck-chip-btn" (click)="setQuickRange(24)">۲۴ ساعت</button>
+      <button type="button" class="ck-chip-btn" (click)="setQuickRange(48)">۲ روز</button>
+      <button type="button" class="ck-chip-btn" (click)="setQuickRange(168)">۷ روز</button>
+    </div>
+    <span class="ck-divider"></span>
+    <label class="ck-field" title="دمایی که بالاتر از آن، نود «در قله» حساب می‌شود.">
+      <span>آستانهٔ قله <span class="ltr">°C</span></span>
+      <input type="number" min="1" [value]="peak()" (input)="peak.set(+$any($event.target).value)" />
+    </label>
+    <label class="ck-field" title="دمایی که پس از برداشتن شیر، رسیدن به آن پایان سرمایش است.">
+      <span>آستانهٔ سرمایش <span class="ltr">°C</span></span>
+      <input type="number" min="0" [value]="cool()" (input)="cool.set(+$any($event.target).value)" />
+    </label>
+    <button type="button" class="ck-btn primary" [disabled]="loading()" (click)="load()">
+      @if (loading()) { <span class="ck-spinner"></span> در حال بارگذاری… } @else { بارگذاری }
+    </button>
+    <button type="button" class="ck-btn small advanced-toggle" [class.active]="showAdvanced()"
+      (click)="showAdvanced.set(!showAdvanced())">⚙ تنظیمات تشخیص آتش</button>
+  </div>
+  @if (showAdvanced()) {
+    <div class="ck-toolbar advanced">
+      <label class="ck-field">
+        <span>پنجرهٔ آتش (دقیقه)</span>
+        <input type="number" min="1" max="120" [value]="fireWindow()" (input)="fireWindow.set(+$any($event.target).value)" />
+      </label>
+      <label class="ck-field">
+        <span>حداقل افزایش <span class="ltr">°C</span></span>
+        <input type="number" min="1" max="1000" [value]="fireRise()" (input)="fireRise.set(+$any($event.target).value)" />
+      </label>
+      <label class="ck-field">
+        <span>حداقل نمونه‌ها</span>
+        <input type="number" min="3" max="100" [value]="fireSamples()" (input)="fireSamples.set(+$any($event.target).value)" />
+      </label>
+      <p class="hint">برای تخمین زمان شروع آتش پیش از نصب شیر: افزایش پیوستهٔ دما در این پنجره.</p>
+    </div>
+  }
+  <p class="ck-status" [class]="status().tone">{{ status().text }}</p>
+</section>
+
+<div class="body">
+  <div class="main">
+    <section class="ck-card chart-card">
+      <header class="card-header">
+        <div>
+          <h3 class="ck-title">نمودار دما</h3>
+          <p class="ck-subtitle">{{ subtitle() }}</p>
+        </div>
+        <div class="actions">
+          <label class="inline-field">
+            <span>دورهٔ شیر</span>
+            <select [disabled]="cycles().length === 0" [value]="cycleIndex()" (change)="selectCycle(+$any($event.target).value)">
+              @for (cycle of cycles(); track cycle.firstObserved; let i = $index) {
+                <option [value]="i">{{ cycleLabel(cycle) }}</option>
+              }
+            </select>
+          </label>
+          <button type="button" class="ck-btn small" [disabled]="!analysis()" (click)="openEditor()"
+            title="زمان شروع آتش، نصب یا برداشتن شیر را برای همین دوره دستی تعیین کنید.">✎ اصلاح رویدادها</button>
+          <button type="button" class="ck-btn small" [disabled]="cycleIndex() < 0 || expanding()" (click)="expandCycle()"
+            title="بازهٔ زمانی را تا ابتدا و انتهای کامل این دوره گسترش می‌دهد.">
+            @if (expanding()) { <span class="ck-spinner"></span> } @else { ⇔ } گسترش تا کل دوره
+          </button>
+        </div>
+      </header>
+
+      <bu-cooking-chart class="main-chart" [class.idle]="!history()" [samples]="visible()" [from]="history()?.from ?? 0" [to]="history()?.to ?? 0"
+        [isGap]="chartGap()" [analysis]="analysis()" [peak]="thresholdsValid() ? peak() : null"
+        [cool]="thresholdsValid() ? cool() : null" [through]="through()" [highlight]="highlight()" [zoomable]="true" />
+      @if (!history()) {
+        <div class="chart-empty">هنوز داده‌ای بارگذاری نشده است</div>
+      }
+
+      <div class="playback">
+        <div class="buttons">
+          <button type="button" class="ck-btn icon" title="نمونهٔ قبل" [disabled]="!history()" (click)="step(-1)">⏮</button>
+          <button type="button" class="ck-btn icon primary play" [title]="playing() ? 'توقف' : 'پخش تحلیل نمونه‌به‌نمونه'"
+            [disabled]="!history()" (click)="togglePlay()">{{ playing() ? '⏸' : '▶' }}</button>
+          <button type="button" class="ck-btn icon" title="نمونهٔ بعد" [disabled]="!history()" (click)="step(1)">⏭</button>
+          <select class="speed" title="سرعت پخش" [value]="speed()" (change)="setSpeed(+$any($event.target).value)">
+            @for (value of speeds; track value) { <option [value]="value">{{ value }}x</option> }
+          </select>
+        </div>
+        <input class="scrubber" type="range" min="0" [max]="visible().length ? visible().length - 1 : 0"
+          [value]="showFull() ? 0 : index()" [disabled]="!history()" (input)="scrub(+$any($event.target).value)" dir="ltr" />
+        <span class="cursor-time">{{ cursorText() }}</span>
+        <label class="toggle" title="تحلیل کل بازه؛ برای تحلیل تا لحظهٔ پخش، این گزینه را خاموش کنید.">
+          <input type="checkbox" [checked]="showFull()" (change)="setShowFull($any($event.target).checked)" />
+          نمایش کل بازه
+        </label>
+      </div>
+    </section>
+
+    <section class="ck-card cycles-card">
+      <header class="card-header">
+        <h3 class="ck-title">دوره‌های شیر</h3>
+        <span class="ck-subtitle">{{ history() ? (cycles().length ? cycles().length + ' دوره' : 'دوره‌ای یافت نشد') : '' }}</span>
+      </header>
+      <div class="table-wrap">
+        <table class="cycles">
+          <thead>
+            <tr>
+              <th>شیر</th>
+              <th>نصب شیر / شروع پخت</th>
+              <th>برداشتن شیر / پایان پخت</th>
+              <th>مدت</th>
+              <th>وضعیت داده</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of cycleRows(); track row.cycle.firstObserved; let i = $index) {
+              <tr [class.selected]="i === cycleIndex()" (click)="selectCycle(i)">
+                <td class="valve">{{ row.cycle.valve }}</td>
+                <td [class.muted]="row.cycle.cookStart === null" [title]="row.startTip">{{ row.start }}</td>
+                <td [class.muted]="row.cycle.cookEnd === null" [title]="row.endTip">{{ row.end }}</td>
+                <td>{{ row.duration }}</td>
+                <td><div class="ck-chips">@for (badge of row.badges; track badge.text) {<span class="ck-pill" [class]="badge.tone">{{ badge.text }}</span>}</div></td>
+              </tr>
+            } @empty {
+              <tr class="empty"><td colspan="5">{{ history() ? 'در این بازه دورهٔ شیری تشخیص داده نشد.' : '—' }}</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <aside class="ck-card analysis-card">
+    <h3 class="ck-title">تحلیل دورهٔ پخت</h3>
+    <p class="ck-subtitle">روی ردیف‌های دارای زمان کلیک کنید تا روی نمودار مشخص شوند.</p>
+    @if (view(); as v) {
+      <div class="analysis-head">
+        <h4>{{ v.title }}</h4>
+        <p>{{ v.subtitle }}</p>
+        <div class="ck-chips">
+          @for (badge of v.badges; track badge.text) { <span class="ck-pill" [class]="badge.tone">{{ badge.text }}</span> }
+        </div>
+      </div>
+      <div class="kpis">
+        @for (kpi of v.kpis; track kpi.title) {
+          <div class="kpi" [style.--kpi-color]="kpi.color">
+            <span class="kpi-title">{{ kpi.title }}</span>
+            <strong class="kpi-value" [class.empty]="kpi.value === '—'">{{ kpi.value }}</strong>
+            <span class="kpi-caption">{{ kpi.caption }}</span>
+          </div>
+        }
+      </div>
+      @for (section of v.sections; track section.title) {
+        <div class="section">
+          <h5>{{ section.title }}</h5>
+          @for (row of section.rows; track row.key) {
+            <div class="row" [class.clickable]="row.from !== undefined && row.from !== null"
+              [class.selected]="selectedRow() === row.key" [title]="row.label + ': ' + row.value" (click)="selectRow(row)">
+              <span class="label">
+                @if (row.marker) { <i class="dot" [style.background]="row.marker"></i> }
+                {{ row.label }}
+                @if (row.badge) { <span class="ck-pill mini">{{ row.badge }}</span> }
+              </span>
+              <span class="value" [class]="'value tone-' + row.tone">{{ row.value }}</span>
+            </div>
+          }
+        </div>
+      }
+    } @else {
+      <div class="ck-empty">{{ emptyText() }}</div>
+    }
+  </aside>
+</div>
+
+<dialog #editDialog class="edit-dialog" (close)="editing.set(null)" (cancel)="editing.set(null)">
+  @if (editing(); as e) {
+    <form method="dialog" (submit)="$event.preventDefault(); applyEditor()">
+      <h3 class="ck-title">اصلاح رویدادهای همین دوره</h3>
+      <p class="ck-subtitle">تیک هر مورد را بزنید تا مقدار دستی جایگزین مقدار تشخیص‌داده‌شده شود. این اصلاح فقط در همین صفحه است و ذخیره نمی‌شود.</p>
+      <div class="edit-row">
+        <label class="toggle"><input type="checkbox" [checked]="e.useFire" (change)="updateEditor({ useFire: $any($event.target).checked })" />
+          <i class="dot" [style.background]="'#dc2626'"></i> شروع آتش</label>
+        <input type="datetime-local" step="1" [disabled]="!e.useFire" [value]="e.fire" (change)="updateEditor({ fire: $any($event.target).value })" />
+      </div>
+      <div class="edit-row">
+        <label class="toggle"><input type="checkbox" [checked]="e.useStart" (change)="updateEditor({ useStart: $any($event.target).checked })" />
+          <i class="dot" [style.background]="'#16a34a'"></i> نصب شیر</label>
+        <input type="datetime-local" step="1" [disabled]="!e.useStart" [value]="e.start" (change)="updateEditor({ start: $any($event.target).value })" />
+      </div>
+      <div class="edit-row">
+        <label class="toggle"><input type="checkbox" [checked]="e.useEnd" (change)="updateEditor({ useEnd: $any($event.target).checked })" />
+          <i class="dot" [style.background]="'#9333ea'"></i> برداشتن شیر</label>
+        <input type="datetime-local" step="1" [disabled]="!e.useEnd" [value]="e.end" (change)="updateEditor({ end: $any($event.target).value })" />
+      </div>
+      @if (editError()) { <p class="ck-status error">{{ editError() }}</p> }
+      <div class="dialog-actions">
+        <button type="submit" class="ck-btn primary">اعمال</button>
+        <button type="button" class="ck-btn" (click)="closeEditor()">انصراف</button>
+      </div>
+    </form>
+  }
+</dialog>

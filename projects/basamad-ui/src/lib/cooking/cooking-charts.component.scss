@@ -1,0 +1,38 @@
+.page {
+  background: var(--ck-page);
+  padding: 12px;
+  min-height: 100%;
+}
+
+.tabs {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  margin-bottom: 12px;
+  border-radius: 10px;
+  background: var(--ck-surface);
+  border: 1px solid var(--ck-border);
+
+  button {
+    height: 32px;
+    padding: 0 16px;
+    border: 0;
+    border-radius: 7px;
+    background: none;
+    font: inherit;
+    font-weight: 600;
+    color: var(--ck-muted);
+    cursor: pointer;
+
+    &:hover { color: var(--ck-text); }
+
+    &.active {
+      background: var(--ck-accent);
+      color: #fff;
+    }
+  }
+}
+
+[hidden] { display: none !important; }
+
+.ck-empty.error { color: var(--ck-danger); }

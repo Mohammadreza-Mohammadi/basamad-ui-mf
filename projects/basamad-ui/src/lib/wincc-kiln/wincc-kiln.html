@@ -151,7 +151,12 @@
         <g
           class="wincc-sensor"
           [class.wincc-sensor--virtual]="vm.isVirtual"
+          [class.wincc-sensor--chartable]="!!korehId"
+          (dblclick)="openNodeChart($event, vm)"
         >
+          @if (korehId) {
+            <title>نود {{ vm.number }} — برای دیدن نمودار دمای ۷ روز اخیر دوبار کلیک کنید</title>
+          }
           <line
             [attr.x1]="vm.x"
             [attr.y1]="vm.stemTopY"
@@ -351,6 +356,11 @@
       }
       <button type="button" (click)="refreshOnDemand()">تازه‌سازی نما</button>
     </div>
+  }
+
+  @if (chartNode(); as node) {
+    <bu-cooking-node-dialog [korehId]="korehId!" [node]="node" [kilnTitle]="labelText()"
+      (closed)="chartNode.set(null)" />
   }
 
   @if (selection(); as selectedGhamir) {

@@ -35,6 +35,8 @@ export class PokhtbanKlinOnlineMonitoringComponent
   @Input() rokhNumber = 1;
   @Input() startOfFirstNodePosition = '1';
   @Input() title = '';
+  /** Encrypted id of the kiln (form mo.Id); enables the node temperature chart on double-click. */
+  @Input() korehId: string | null = null;
   @Input() deviceSize: AbbrevationDeviceSize = 'xl';
   @Input() ghamirs: MetaobjectDataModel[] = [];
   @Input() transmitters: MetaobjectDataModel[] = [];

@@ -36,7 +36,12 @@ import {
   GroupedBarChartComponent,
   KilnAlignerComponent,
   KilnRokh,
-  WinccKiln
+  WinccKiln,
+  CookingChartsComponent,
+  CookingOverviewComponent,
+  CookingDetailComponent,
+  CookingChartComponent,
+  CookingNodeDialogComponent,
 } from './components';
 import { FundamentalNgxCoreModule } from '@fundamental-ngx/core';
 import { FormModule } from '@fundamental-ngx/core/form';
@@ -58,8 +63,11 @@ const components = [
   GroupedBarChartComponent,
   KilnAlignerComponent,
   KilnRokh,
-  WinccKiln
+  WinccKiln,
+  CookingChartsComponent
 ];
+// Building blocks of CookingCharts; declared here but not dynamic entry points.
+const cookingParts = [CookingOverviewComponent, CookingDetailComponent, CookingChartComponent, CookingNodeDialogComponent];
 const pipes = [
   BuGroupByPipe,
   DamaColorPipe,
@@ -72,7 +80,7 @@ const pipes = [
 ];
 
 @NgModule({
-  declarations: [...components, ...pipes],
+  declarations: [...components, ...cookingParts, ...pipes],
   imports: [
     CommonModule,
     RouterModule,
@@ -84,7 +92,7 @@ const pipes = [
     KilnSceneComponent,
     KilnDashboardComponent,
   ],
-  exports: [...components, ...pipes],
+  exports: [...components, ...cookingParts, ...pipes],
   providers: [...pipes, BasamadService, OrientationService],
   schemas: [NO_ERRORS_SCHEMA],
 })

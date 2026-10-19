@@ -1,0 +1,22 @@
+<div class="page" dir="rtl">
+  <nav class="tabs" role="tablist">
+    <button type="button" role="tab" [class.active]="tab() === 'overview'" [attr.aria-selected]="tab() === 'overview'"
+      (click)="tab.set('overview')">نمودار نودها</button>
+    <button type="button" role="tab" [class.active]="tab() === 'detail'" [attr.aria-selected]="tab() === 'detail'"
+      (click)="tab.set('detail')">جزئیات نود و تحلیل پخت</button>
+  </nav>
+
+  @if (loading()) {
+    <div class="ck-empty"><span class="ck-spinner"></span>&nbsp; در حال دریافت فهرست کوره‌ها…</div>
+  } @else if (error()) {
+    <div class="ck-empty error">
+      دریافت فهرست کوره‌ها ناموفق بود: {{ error() }}<br />
+      <button type="button" class="ck-btn" (click)="loadKilns()">تلاش دوباره</button>
+    </div>
+  } @else if (kilns().length === 0) {
+    <div class="ck-empty">کوره‌ی فعالی برای نمایش وجود ندارد.</div>
+  } @else {
+    <bu-cooking-overview [hidden]="tab() !== 'overview'" [kilns]="kilns()" (selectionMade)="openDetail($event)" />
+    <bu-cooking-detail [hidden]="tab() !== 'detail'" [kilns]="kilns()" />
+  }
+</div>

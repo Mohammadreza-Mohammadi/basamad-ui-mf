@@ -1,0 +1,253 @@
+:host {
+  --heat-hot: #dc2626;
+  --heat-was: #f59e0b;
+  --heat-cold: #94a3b8;
+  --heat-none: #e2e8f0;
+}
+
+.toolbar-card { margin-bottom: 12px; }
+
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  color: var(--ck-text-2);
+  cursor: pointer;
+}
+
+.quick { align-self: center; margin-top: 16px; }
+
+.legend-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+
+  .ck-status { margin-top: 10px; }
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--ck-text-2);
+
+  > span { display: inline-flex; align-items: center; gap: 6px; }
+}
+
+.heat {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+
+  &.hot { background: var(--heat-hot); }
+  &.was { background: var(--heat-was); }
+  &.cold { background: var(--heat-cold); }
+  &.none { background: var(--heat-none); }
+}
+
+.heat-pill {
+  &.hot { background: var(--ck-danger-soft); color: var(--ck-danger); }
+  &.was { background: var(--ck-warning-soft); color: var(--ck-warning); }
+  &.cold { background: var(--ck-neutral-soft); color: var(--ck-text-2); }
+  &.none { background: var(--ck-neutral-soft); color: var(--ck-muted); }
+}
+
+.kiln { margin-bottom: 16px; }
+
+.kiln-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'title heatmap'
+    'summary heatmap';
+  gap: 6px 16px;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+
+  &:hover { border-color: color-mix(in srgb, var(--ck-accent) 35%, var(--ck-border)); }
+}
+
+.kiln-title {
+  grid-area: title;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+
+  .chevron { color: var(--ck-muted); width: 14px; }
+}
+
+.kiln-summary {
+  grid-area: summary;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.heatmap {
+  grid-area: heatmap;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  max-width: min(520px, 48vw);
+  justify-content: flex-start;
+  cursor: default;
+}
+
+.cell {
+  width: 24px;
+  height: 24px;
+  border: 0;
+  border-radius: 5px;
+  font: inherit;
+  font-size: 10px;
+  font-weight: 700;
+  color: #fff;
+  cursor: pointer;
+  padding: 0;
+  transition: transform 0.1s, box-shadow 0.1s;
+
+  &.hot { background: var(--heat-hot); }
+  &.was { background: var(--heat-was); }
+  &.cold { background: var(--heat-cold); }
+  &.none { background: var(--heat-none); color: var(--ck-muted); }
+
+  &:hover {
+    transform: scale(1.12);
+    box-shadow: 0 0 0 2px var(--ck-text);
+  }
+}
+
+.cards {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+// The heat stripe sits on the inline-start edge (the right side in RTL).
+.node-card {
+  position: relative;
+  background: var(--ck-surface);
+  border: 1px solid var(--ck-border);
+  border-radius: var(--ck-radius);
+  border-inline-start: 6px solid var(--heat-none);
+  padding: 4px 14px 12px;
+  transition: box-shadow 0.2s;
+
+  &.hot {
+    border-inline-start-color: var(--heat-hot);
+    border-color: color-mix(in srgb, var(--heat-hot) 40%, var(--ck-border));
+    border-inline-start-color: var(--heat-hot);
+    background: linear-gradient(to left, color-mix(in srgb, var(--heat-hot) 8%, #fff), #fff 60%) top / 100% 46px no-repeat, var(--ck-surface);
+  }
+  &.was { border-inline-start-color: var(--heat-was); }
+  &.cold { border-inline-start-color: var(--heat-cold); }
+  &.none { padding-bottom: 4px; }
+
+  &.flash { box-shadow: 0 0 0 2px var(--ck-accent); }
+}
+
+.node-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  cursor: pointer;
+
+  h4 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  &:hover h4 { color: var(--ck-accent); }
+
+  .details {
+    margin-inline-start: auto;
+    font-size: 12px;
+    color: var(--ck-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+  }
+}
+
+.node-chart {
+  height: 220px;
+  cursor: crosshair;
+}
+
+.cycles {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 8px 0 2px;
+}
+
+.cycle-tile {
+  flex: 0 0 250px;
+  background: var(--ck-surface-alt);
+  border: 1px solid var(--ck-border);
+  border-radius: 8px;
+  padding: 2px 6px 4px;
+
+  &:hover { border-color: var(--ck-accent); }
+}
+
+.cycle-head {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  height: 26px;
+  border: 0;
+  background: none;
+  padding: 0 2px;
+  font: inherit;
+  font-size: 12px;
+  color: var(--ck-text);
+  cursor: pointer;
+
+  .ck-pill { height: 17px; font-size: 10px; padding: 0 6px; }
+  .range { margin-inline-start: auto; color: var(--ck-muted); font-size: 11px; }
+  &:hover strong { color: var(--ck-accent); }
+}
+
+.cycle-chart {
+  height: 46px;
+  cursor: crosshair;
+}
+
+.no-cycles {
+  color: var(--ck-muted);
+  font-size: 12px;
+  padding: 10px 2px;
+}
+
+.ck-empty.small { padding: 16px; }
+
+@media (max-width: 720px) {
+  .kiln-header {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: 'title' 'summary' 'heatmap';
+  }
+
+  .heatmap { max-width: none; }
+
+  .node-header {
+    flex-wrap: wrap;
+
+    .details { margin-inline-start: 0; flex-basis: 100%; white-space: normal; }
+  }
+
+  .node-chart { height: 200px; }
+}

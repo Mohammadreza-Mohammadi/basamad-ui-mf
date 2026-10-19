@@ -17,7 +17,8 @@ module.exports = withNativeFederation({
         './ChartJabejay':               './projects/basamad-ui/src/lib/chart-jabejay/chart-jabejay.component.ts',
         './GroupedBarChart':            './projects/basamad-ui/src/lib/grouped-bar-chart/grouped-bar-chart.component.ts',
         './KilnAligner':                './projects/basamad-ui/src/lib/kiln-aligner/kiln-aligner.component.ts',
-        './KilnRokh':                   './projects/basamad-ui/src/lib/kiln-rokh/kiln-rokh.ts'
+        './KilnRokh':                   './projects/basamad-ui/src/lib/kiln-rokh/kiln-rokh.ts',
+        './CookingCharts':              './projects/basamad-ui/src/lib/cooking/cooking-charts.component.ts'
     },
 
     // این فهرست باید دقیقاً با host یکی بمونه تا نمونه‌ی Angular/rxjs/barsa مشترک بمونه (رفع NG0203/NG0201).

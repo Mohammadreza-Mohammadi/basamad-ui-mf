@@ -1,0 +1,137 @@
+<section class="ck-card toolbar-card">
+  <div class="ck-toolbar">
+    @if (factories().length > 1) {
+      <label class="ck-field">
+        <span>کارخانه</span>
+        <select [value]="factory()" (change)="factory.set($any($event.target).value)">
+          @for (item of factories(); track item) {
+            <option [value]="item">{{ item || 'بدون نام' }}</option>
+          }
+        </select>
+      </label>
+    }
+    <label class="ck-field">
+      <span>از</span>
+      <input type="datetime-local" [value]="fromInput()" (change)="fromInput.set($any($event.target).value)" />
+    </label>
+    <label class="ck-field">
+      <span>تا</span>
+      <input type="datetime-local" [value]="toInput()" (change)="toInput.set($any($event.target).value)" />
+    </label>
+    <div class="ck-chips quick">
+      <button type="button" class="ck-chip-btn" (click)="setQuickRange(12)">۱۲ ساعت</button>
+      <button type="button" class="ck-chip-btn" (click)="setQuickRange(24)">۲۴ ساعت</button>
+      <button type="button" class="ck-chip-btn" (click)="setQuickRange(72)">۳ روز</button>
+      <button type="button" class="ck-chip-btn" (click)="setQuickRange(168)">۷ روز</button>
+    </div>
+    <span class="ck-divider"></span>
+    <label class="ck-field" title="نودهایی که دمایشان به این مقدار یا بیشتر برسد، رنگی نشان داده می‌شوند.">
+      <span>آستانهٔ دما <span class="ltr">°C</span></span>
+      <input type="number" min="0" max="2000" step="50" [value]="threshold()"
+        (input)="threshold.set(+$any($event.target).value || 0)" />
+    </label>
+    <label class="ck-field">
+      <span>ترتیب</span>
+      <select [value]="sort()" (change)="sort.set($any($event.target).value)">
+        <option value="node">شمارهٔ نود</option>
+        <option value="hot">داغ‌ترین اول</option>
+      </select>
+    </label>
+    <button type="button" class="ck-btn primary" [disabled]="loading()" (click)="load()">
+      @if (loading()) { <span class="ck-spinner"></span> در حال بارگذاری… } @else { نمایش نمودارها }
+    </button>
+    <label class="toggle">
+      <input type="checkbox" [checked]="onlyHot()" (change)="onlyHot.set($any($event.target).checked)" />
+      فقط نودهایی که از آستانه گذشته‌اند
+    </label>
+  </div>
+  <div class="legend-row">
+    <p class="ck-status" [class]="status().tone">{{ status().text }}</p>
+    <div class="legend">
+      <span><i class="heat hot"></i>آخرین دما ≥ <span class="ltr">{{ threshold() }}</span></span>
+      <span><i class="heat was"></i>در بازه گذشته</span>
+      <span><i class="heat cold"></i>زیر آستانه</span>
+      <span><i class="heat none"></i>بدون داده</span>
+    </div>
+  </div>
+</section>
+
+@if (sections().length === 0) {
+  <div class="ck-empty">
+    بازهٔ زمانی را انتخاب و «نمایش نمودارها» را بزنید.<br />
+    کنار هر نود یک نوار رنگی نشان می‌دهد دمای آن نسبت به آستانه چه وضعیتی دارد.<br />
+    بیشترین بازه {{ maxDays }} روز است.
+  </div>
+}
+
+@for (section of sections(); track section.kiln.id) {
+  <section class="kiln">
+    <header class="ck-card kiln-header" (click)="toggle(section)" [attr.aria-expanded]="section.expanded">
+      <div class="kiln-title">
+        <span class="chevron">{{ section.expanded ? '▾' : '◂' }}</span>
+        <h3 class="ck-title">کوره {{ section.kiln.number }}</h3>
+        @if (section.kiln.title) { <span class="ck-subtitle">{{ section.kiln.title }}</span> }
+      </div>
+      <div class="kiln-summary">
+        @if (section.loading) {
+          <span class="ck-pill accent"><span class="ck-spinner"></span>&nbsp; در حال خواندن…</span>
+        } @else if (section.error) {
+          <span class="ck-pill danger">{{ section.error }}</span>
+        } @else {
+          @for (item of counts(section); track item.heat) {
+            <span class="ck-pill" [class]="'heat-pill ' + item.heat">{{ item.count }} {{ heatText[item.heat] }}</span>
+          }
+        }
+      </div>
+      @if (!section.loading && section.cards.length) {
+        <div class="heatmap" (click)="$event.stopPropagation()">
+          @for (card of section.cards; track card.key) {
+            <button type="button" class="cell" [class]="'cell ' + heatOf(card)" [title]="cellTitle(card)"
+              (click)="reveal(section, card)">{{ card.series.node }}</button>
+          }
+        </div>
+      }
+    </header>
+
+    @if (section.expanded && !section.loading) {
+      <div class="cards">
+        @for (card of visibleCards(section); track card.key) {
+          <article class="node-card" [class]="'node-card ' + heatOf(card)" [class.flash]="flashKey() === card.key"
+            [attr.data-card]="card.key">
+            <header class="node-header" (click)="open(card)" title="برای تحلیل کل بازهٔ این نود کلیک کنید">
+              <h4>نود {{ card.series.node }}</h4>
+              <span class="ck-pill" [class]="'heat-pill ' + heatOf(card)">{{ stateText(card) }}</span>
+              <span class="details">{{ details(card) }}</span>
+            </header>
+            @if (card.series.last !== null) {
+              <bu-cooking-chart class="node-chart" [samples]="card.series.samples" [from]="card.from" [to]="card.to"
+                [isGap]="card.gapTest" [peak]="threshold()" peakLabel="آستانه" [lazy]="true" [selectable]="true"
+                (rangeSelected)="open(card, $event.from, $event.to)" />
+              <div class="cycles">
+                @for (tile of card.cycles; track tile.cycle.firstObserved) {
+                  <div class="cycle-tile">
+                    <button type="button" class="cycle-head" (click)="open(card, tile.from, tile.to)"
+                      title="برای تحلیل این دوره کلیک کنید">
+                      <strong>شیر {{ tile.cycle.valve }}</strong>
+                      @for (tag of tile.tags; track tag.text) {
+                        <span class="ck-pill" [class]="tag.tone">{{ tag.text }}</span>
+                      }
+                      <span class="range ltr">{{ formatShort(tile.from) }} – {{ formatShort(tile.to) }}</span>
+                    </button>
+                    <bu-cooking-chart class="cycle-chart" [samples]="tile.samples" [from]="tile.from" [to]="tile.to"
+                      [isGap]="card.gapTest" [compact]="true" [lazy]="true" [selectable]="true"
+                      (rangeSelected)="open(card, $event.from, $event.to)" />
+                  </div>
+                } @empty {
+                  <span class="no-cycles">دورهٔ شیری در این بازه تشخیص داده نشد.</span>
+                }
+              </div>
+            }
+          </article>
+        } @empty {
+          <div class="ck-empty small">در این کوره نودی از آستانه عبور نکرده است.</div>
+        }
+      </div>
+    }
+  </section>
+}

@@ -1,0 +1,51 @@
+<dialog #dialog class="node-dialog panzoom-exclude" dir="rtl" (close)="closed.emit()"
+  (click)="$event.target === $event.currentTarget && close()">
+  <header class="head">
+    <div>
+      <h3 class="ck-title">نمودار دمای نود {{ node }}</h3>
+      <p class="ck-subtitle">
+        {{ kilnTitle ? kilnTitle + '  ·  ' : '' }}{{ days }} روز اخیر
+        @if (history(); as h) { ({{ formatDateTime(h.from, false) }} تا {{ formatDateTime(h.to, false) }}) }
+      </p>
+    </div>
+    <div class="stats">
+      @if (history(); as h) {
+        @if (h.node.last !== null) { <span class="ck-pill accent">آخرین دما {{ celsius(h.node.last) }}</span> }
+        @if (h.node.lastAt !== null) { <span class="ck-pill">آخرین قرائت {{ formatShort(h.node.lastAt) }}</span> }
+        <span class="ck-pill">{{ cycles().length }} دورهٔ شیر</span>
+      }
+      <button type="button" class="ck-btn icon" title="بستن" (click)="close()">✕</button>
+    </div>
+  </header>
+
+  <div class="chart-wrap">
+    @if (history() && samples().length) {
+      <bu-cooking-chart class="chart" [samples]="samples()" [from]="history()!.from" [to]="history()!.to"
+        [isGap]="gap()" [peak]="900" [cool]="600" [highlight]="highlight()" [zoomable]="true" />
+    }
+    @if (loading()) {
+      <div class="state"><span class="ck-spinner"></span>&nbsp; در حال خواندن دمای {{ days }} روز اخیر…</div>
+    } @else if (error()) {
+      <div class="state error">
+        خواندن داده ناموفق بود: {{ error() }}<br />
+        <button type="button" class="ck-btn small" (click)="load()">تلاش دوباره</button>
+      </div>
+    } @else if (!samples().length) {
+      <div class="state">در {{ days }} روز اخیر دمایی برای این نود ثبت نشده است.</div>
+    }
+  </div>
+
+  @if (cycles().length) {
+    <div class="cycles">
+      <span class="label">دوره‌های شیر:</span>
+      @for (cycle of cycles(); track cycle.firstObserved; let i = $index) {
+        <button type="button" class="cycle" [class.selected]="selectedCycle() === i" (click)="selectCycle(i, cycle)"
+          title="برای مشخص شدن روی نمودار کلیک کنید">
+          <strong>شیر {{ cycle.valve }}</strong>
+          <span class="ltr">{{ cycleRange(cycle) }}</span>
+          @if (cycleDuration(cycle)) { <span class="duration">{{ cycleDuration(cycle) }}</span> }
+        </button>
+      }
+    </div>
+  }
+</dialog>

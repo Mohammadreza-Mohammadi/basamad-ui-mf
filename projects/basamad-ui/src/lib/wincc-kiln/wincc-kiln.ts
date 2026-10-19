@@ -155,6 +155,8 @@ export class WinccKiln
   /** Matches WinccKilnControl: true puts the first numbered node at the right. */
   @Input() startsFromRight = false;
   @Input() mode: 'designer' | 'runtime' = 'designer';
+  /** Encrypted kiln id; when set, double-clicking a node opens its 7-day temperature chart. */
+  @Input() korehId: string | null = null;
 
   private readonly componentId = ++nextComponentId;
   readonly productDialogTitleId = `wincc-product-dialog-${this.componentId}`;
@@ -190,6 +192,8 @@ export class WinccKiln
   readonly productLoading = signal(false);
   readonly productSaving = signal(false);
   readonly productError = signal('');
+  /** Node whose temperature chart dialog is open. */
+  readonly chartNode = signal<number | null>(null);
 
   readonly viewBoxAttr = computed(
     () => `0 0 ${this.sceneWidth()} ${this.sceneHeight()}`,
@@ -756,6 +760,14 @@ export class WinccKiln
       asBoolean(sensor.IsTermokoplGhat) ||
       asBoolean(sensor.TermokoplFailed)
     );
+  }
+
+  openNodeChart(event: Event, sensor: SensorVM): void {
+    const node = Number(sensor.number);
+    if (!this.korehId || !Number.isFinite(node) || node <= 0) return;
+    event.preventDefault();
+    event.stopPropagation();
+    this.chartNode.set(node);
   }
 
   toggleCookValue(event: Event, sensor: SensorVM): void {

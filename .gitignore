@@ -23,3 +23,5 @@
 Thumbs.db
 /.chrome*
 /.edge-*
+/preview-tmp/
+/.claude/settings.local.json

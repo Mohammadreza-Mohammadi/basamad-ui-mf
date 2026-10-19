@@ -8,3 +8,8 @@ export { GroupedBarChartComponent } from './grouped-bar-chart/grouped-bar-chart.
 export { KilnAlignerComponent } from './kiln-aligner/kiln-aligner.component';
 export { KilnRokh} from './kiln-rokh/kiln-rokh';
 export { WinccKiln } from './wincc-kiln/wincc-kiln';
+export { CookingChartsComponent } from './cooking/cooking-charts.component';
+export { CookingOverviewComponent } from './cooking/cooking-overview.component';
+export { CookingDetailComponent } from './cooking/cooking-detail.component';
+export { CookingChartComponent } from './cooking/cooking-chart.component';
+export { CookingNodeDialogComponent } from './cooking/cooking-node-dialog.component';
