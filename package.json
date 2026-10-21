@@ -1,6 +1,6 @@
 {
   "name": "basamad-ui-mf",
-  "version": "1.0.25",
+  "version": "1.0.26",
   "description": "Basamad UI as a standalone Native Federation remote (mirrors the BarsaSvgMapReport pattern).",
   "scripts": {
     "ng": "ng",

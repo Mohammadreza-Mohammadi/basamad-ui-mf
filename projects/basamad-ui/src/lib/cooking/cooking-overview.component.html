@@ -3,13 +3,22 @@
     @if (factories().length > 1) {
       <label class="ck-field">
         <span>کارخانه</span>
-        <select [value]="factory()" (change)="factory.set($any($event.target).value)">
+        <select [value]="factory()" (change)="selectFactory($any($event.target).value)">
           @for (item of factories(); track item) {
             <option [value]="item">{{ item || 'بدون نام' }}</option>
           }
         </select>
       </label>
     }
+    <label class="ck-field kiln-filter">
+      <span>کوره</span>
+      <select [value]="kilnId()" (change)="kilnId.set($any($event.target).value)">
+        <option value="">همهٔ کوره‌ها</option>
+        @for (kiln of filteredKilns(); track kiln.id) {
+          <option [value]="kiln.id">کوره {{ kiln.number }}{{ kiln.title ? ' — ' + kiln.title : '' }}</option>
+        }
+      </select>
+    </label>
     <label class="ck-field">
       <span>از</span>
       <input type="datetime-local" [value]="fromInput()" (change)="fromInput.set($any($event.target).value)" />
@@ -58,7 +67,7 @@
 
 @if (sections().length === 0) {
   <div class="ck-empty">
-    بازهٔ زمانی را انتخاب و «نمایش نمودارها» را بزنید.<br />
+    کوره و بازهٔ زمانی را انتخاب و «نمایش نمودارها» را بزنید.<br />
     کنار هر نود یک نوار رنگی نشان می‌دهد دمای آن نسبت به آستانه چه وضعیتی دارد.<br />
     بیشترین بازه {{ maxDays }} روز است.
   </div>

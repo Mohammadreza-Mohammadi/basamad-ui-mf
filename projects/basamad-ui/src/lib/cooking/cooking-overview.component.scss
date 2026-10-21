@@ -7,6 +7,8 @@
 
 .toolbar-card { margin-bottom: 12px; }
 
+.kiln-filter select { min-width: 150px; max-width: min(260px, 80vw); }
+
 .toggle {
   display: inline-flex;
   align-items: center;

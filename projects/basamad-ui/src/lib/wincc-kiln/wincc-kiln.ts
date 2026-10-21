@@ -155,7 +155,7 @@ export class WinccKiln
   /** Matches WinccKilnControl: true puts the first numbered node at the right. */
   @Input() startsFromRight = false;
   @Input() mode: 'designer' | 'runtime' = 'designer';
-  /** Encrypted kiln id; when set, double-clicking a node opens its 7-day temperature chart. */
+  /** Encrypted kiln id; when set, double-clicking a node opens its 3-day temperature chart. */
   @Input() korehId: string | null = null;
 
   private readonly componentId = ++nextComponentId;

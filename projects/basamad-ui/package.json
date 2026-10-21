@@ -1,6 +1,6 @@
 {
   "name": "basamad-ui",
-  "version": "1.0.25",
+  "version": "1.0.26",
   "peerDependencies": {
     "@angular/common": "^22.0.0",
     "@angular/core": "^22.0.0",

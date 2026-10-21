@@ -78,20 +78,23 @@ export class CookingOverviewComponent implements OnChanges, OnDestroy {
   private readonly host = inject(ElementRef<HTMLElement>);
   private request = 0;
 
+  readonly availableKilns = signal<CookingKiln[]>([]);
   readonly fromInput = signal(toInputDate(Date.now() - 24 * 3600_000));
   readonly toInput = signal(toInputDate(Date.now()));
   readonly threshold = signal(600);
   readonly sort = signal<'node' | 'hot'>('node');
   readonly onlyHot = signal(false);
   readonly factory = signal('');
+  readonly kilnId = signal('');
   readonly loading = signal(false);
   readonly status = signal<{ text: string; tone: 'info' | 'busy' | 'ok' | 'error' }>({
-    text: 'بازهٔ زمانی را انتخاب و «نمایش نمودارها» را بزنید.', tone: 'info',
+    text: 'کوره و بازهٔ زمانی را انتخاب و «نمایش نمودارها» را بزنید.', tone: 'info',
   });
   readonly sections = signal<KilnSection[]>([]);
   readonly flashKey = signal('');
 
-  readonly factories = computed(() => [...new Set(this.kilns.map((k) => k.factory))]);
+  readonly factories = computed(() => [...new Set(this.availableKilns().map((k) => k.factory))]);
+  readonly filteredKilns = computed(() => this.availableKilns().filter((k) => k.factory === this.factory()));
   readonly heatText = HEAT_TEXT;
   readonly maxDays = MAX_OVERVIEW_DAYS;
   readonly formatDateTime = formatDateTime;
@@ -114,7 +117,9 @@ export class CookingOverviewComponent implements OnChanges, OnDestroy {
   });
 
   ngOnChanges(): void {
+    this.availableKilns.set(this.kilns);
     if (!this.factories().includes(this.factory())) this.factory.set(this.factories()[0] ?? '');
+    if (this.kilnId() && !this.filteredKilns().some((k) => k.id === this.kilnId())) this.kilnId.set('');
   }
 
   ngOnDestroy(): void {
@@ -203,6 +208,11 @@ export class CookingOverviewComponent implements OnChanges, OnDestroy {
     this.fromInput.set(toInputDate(now - hours * 3600_000));
   }
 
+  selectFactory(factory: string): void {
+    this.factory.set(factory);
+    this.kilnId.set('');
+  }
+
   // ------------------------------------------------------------------ loading
 
   async load(): Promise<void> {
@@ -216,7 +226,7 @@ export class CookingOverviewComponent implements OnChanges, OnDestroy {
       this.status.set({ text: `بازه حداکثر ${MAX_OVERVIEW_DAYS} روز می‌تواند باشد.`, tone: 'error' });
       return;
     }
-    const kilns = this.kilns.filter((k) => !this.factory() || k.factory === this.factory());
+    const kilns = this.filteredKilns().filter((k) => !this.kilnId() || k.id === this.kilnId());
     if (kilns.length === 0) {
       this.status.set({ text: 'کوره‌ای برای نمایش وجود ندارد.', tone: 'error' });
       return;

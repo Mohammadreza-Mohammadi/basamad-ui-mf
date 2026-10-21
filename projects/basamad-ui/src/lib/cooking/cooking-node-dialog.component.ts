@@ -32,7 +32,7 @@ export class CookingNodeDialogComponent implements AfterViewInit, OnDestroy {
   @Input({ required: true }) korehId!: string;
   @Input({ required: true }) node!: number;
   @Input() kilnTitle = '';
-  @Input() days = 7;
+  @Input() days = 3;
   @Output() readonly closed = new EventEmitter<void>();
 
   @ViewChild('dialog', { static: true }) private dialogRef!: ElementRef<HTMLDialogElement>;
