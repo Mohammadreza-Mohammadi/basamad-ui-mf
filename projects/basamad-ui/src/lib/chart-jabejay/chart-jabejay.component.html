@@ -1,12 +1,32 @@
-<bu-grouped-bar-chart
-  style="height:100svh"
-  [data]="moDataList | groupebyChart: viewSetting.GroupByProp"
-  [groupBy]="viewSetting.GroupByProp"
-  [xProp]="viewSetting.XProp"
-  [yProps]="viewSetting.YProps | split"
-  [yInterval]="+viewSetting.YInterval"  
-  intersectionObserver
-  [intersectionThreshold]="0.5"
-  (visibilityChange)="onVisibilityChange($event)"
->
-</bu-grouped-bar-chart>
+<section class="weekly-movement" dir="rtl">
+  <div class="mode-bar">
+    <span class="mode-bar-title">نوع نمایش</span>
+    <div class="mode-switch" role="tablist">
+      <button type="button" role="tab" *ngFor="let item of modes" [class.active]="item.value === mode"
+        [attr.aria-selected]="item.value === mode" [disabled]="loading" (click)="setMode(item.value)">{{ item.label }}</button>
+    </div>
+  </div>
+
+  <header class="weekly-header">
+    <div class="week-heading">
+      <h2>{{ periodTitle || 'گزارش جابجایی کوره‌ها' }}</h2>
+      <p *ngIf="period">{{ boundaryTitle }}</p>
+    </div>
+    <div class="week-navigation">
+      <button type="button" (click)="previousPeriod()" [disabled]="loading || periodsAgo >= maxPeriodsAgo">{{ periodName }} قبل</button>
+      <button type="button" (click)="nextPeriod()" [disabled]="loading || periodsAgo === 0">{{ periodName }} بعد</button>
+    </div>
+  </header>
+
+  <p class="state" *ngIf="loading">در حال دریافت داده‌های جابجایی…</p>
+  <p class="state error" *ngIf="error">{{ error }}</p>
+  <p class="state" *ngIf="!loading && !error && !period">کوره‌ای برای نمایش در گزارش نیست.</p>
+
+  <div class="weekly-summary" *ngIf="period && visibleKilns.length" [attr.data-tone]="summaryTone">
+    <strong>{{ summaryText }}</strong>
+    <span>{{ totals.actual }} جابجایی از {{ totals.target }} هدف {{ targetPeriodName }}</span>
+    <span *ngIf="period?.isComplete && totals.ratio !== null">{{ percentageText }}</span>
+  </div>
+
+  <div #chartsHost class="charts-host"></div>
+</section>
